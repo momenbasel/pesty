@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pesty — Free Open-Source Clipboard Manager for Mac (Paste App Alternative)</title>
+<meta name="description" content="Pesty is a free, open-source clipboard manager for macOS — a native Paste-app alternative. Color-coded clipboard history, pinboards, instant search, and keyboard-fast pasting. Universal, signed & notarized. Install with Homebrew." />
+<meta name="keywords" content="clipboard manager mac, mac clipboard manager, clipboard history mac, paste app alternative, free clipboard manager macOS, open source clipboard manager, macOS clipboard app, pinboards, copy paste history mac, Maccy alternative, clipboard manager swift" />
+<meta name="author" content="Moamen Basel" />
+<meta name="theme-color" content="#5B6CFF" />
+<link rel="canonical" href="https://www.moamenbasel.com/pesty/" />
+<link rel="icon" type="image/png" href="assets/icon.png" />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Pesty" />
+<meta property="og:title" content="Pesty — Free Open-Source Clipboard Manager for Mac" />
+<meta property="og:description" content="A native Paste-app alternative for macOS: color-coded clipboard history, pinboards, instant search, and keyboard-fast pasting. Free and open source." />
+<meta property="og:url" content="https://www.moamenbasel.com/pesty/" />
+<meta property="og:image" content="https://www.moamenbasel.com/pesty/assets/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Pesty — Free Open-Source Clipboard Manager for Mac" />
+<meta name="twitter:description" content="A native, free, open-source Paste-app alternative for macOS. Clipboard history, pinboards, search, instant paste." />
+<meta name="twitter:image" content="https://www.moamenbasel.com/pesty/assets/og-image.png" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pesty",
+  "alternateName": "Pesty Clipboard Manager",
+  "description": "Pesty is a free, open-source clipboard manager for macOS — a native Paste-app alternative with color-coded clipboard history, pinboards, instant search, and keyboard-driven pasting.",
+  "applicationCategory": "ProductivityApplication",
+  "operatingSystem": "macOS 14.0 or later",
+  "softwareVersion": "1.1.0",
+  "downloadUrl": "https://github.com/momenbasel/pesty/releases/latest",
+  "url": "https://www.moamenbasel.com/pesty/",
+  "image": "https://www.moamenbasel.com/pesty/assets/og-image.png",
+  "screenshot": "https://www.moamenbasel.com/pesty/assets/screenshot-strip.png",
+  "license": "https://opensource.org/licenses/MIT",
+  "author": { "@type": "Person", "name": "Moamen Basel" },
+  "offers": {
+    "@type": "AggregateOffer",
+    "priceCurrency": "USD",
+    "lowPrice": "0",
+    "highPrice": "19.99",
+    "offerCount": "2"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Is Pesty free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Pesty is free and open source (MIT) on GitHub and installable with Homebrew. A paid convenience build is also on the Mac App Store."}},
+    {"@type":"Question","name":"Is Pesty a Paste app alternative?","acceptedAnswer":{"@type":"Answer","text":"Yes. Pesty reimplements the core Paste experience — a slide-up, color-coded clipboard strip with pinboards, search, and keyboard pasting — as a free, open-source, native macOS app."}},
+    {"@type":"Question","name":"Does Pesty keep my clipboard private?","acceptedAnswer":{"@type":"Answer","text":"Yes. Everything stays on your Mac. Pesty collects no data, makes no network calls, and ignores clips marked concealed by password managers."}},
+    {"@type":"Question","name":"How do I install Pesty?","acceptedAnswer":{"@type":"Answer","text":"Run: brew install --cask momenbasel/pesty/pesty — or download the signed, notarized DMG from the GitHub releases page."}}
+  ]
+}
+</script>
+<style>
+  :root { --bg:#0e0e14; --card:#16161f; --fg:#f2f2f7; --muted:#a0a0b4; --accent:#6c7bff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,system-ui,"Segoe UI",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; }
+  a { color:var(--accent); text-decoration:none; }
+  .wrap { max-width:960px; margin:0 auto; padding:0 22px; }
+  header { text-align:center; padding:72px 0 36px; }
+  header img.logo { width:108px; height:108px; }
+  h1 { font-size:44px; margin:18px 0 6px; }
+  .tag { color:var(--muted); font-size:20px; margin:0 0 28px; }
+  .cta { display:inline-flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .btn { background:var(--accent); color:#fff; padding:12px 22px; border-radius:10px; font-weight:600; }
+  .btn.alt { background:var(--card); color:var(--fg); border:1px solid #2a2a3a; }
+  .shot { width:100%; border-radius:14px; margin:18px 0 8px; border:1px solid #23232f; }
+  code { background:var(--card); padding:3px 8px; border-radius:6px; font-size:15px; }
+  pre { background:var(--card); padding:14px 16px; border-radius:10px; overflow:auto; }
+  h2 { font-size:28px; margin-top:48px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:18px; }
+  .feat { background:var(--card); border:1px solid #20202c; border-radius:12px; padding:16px 18px; }
+  .feat h3 { margin:0 0 6px; font-size:17px; }
+  .feat p { margin:0; color:var(--muted); font-size:15px; }
+  table { width:100%; border-collapse:collapse; margin-top:16px; font-size:15px; }
+  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid #23232f; }
+  th { color:var(--muted); font-weight:600; }
+  details { background:var(--card); border:1px solid #20202c; border-radius:10px; padding:12px 16px; margin:10px 0; }
+  summary { cursor:pointer; font-weight:600; }
+  footer { color:var(--muted); text-align:center; padding:48px 0; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <img class="logo" src="assets/icon.png" alt="Pesty clipboard manager app icon" />
+  <h1>Pesty</h1>
+  <p class="tag">A free, open-source clipboard manager for Mac.</p>
+  <div class="cta">
+    <a class="btn" href="https://github.com/momenbasel/pesty/releases/latest">Download for macOS</a>
+    <a class="btn alt" href="https://github.com/momenbasel/pesty">View on GitHub</a>
+  </div>
+  <p style="margin-top:14px;color:var(--muted);font-size:15px;">or <code>brew install --cask momenbasel/pesty/pesty</code></p>
+</header>
+
+<img class="shot" src="assets/screenshot-strip.png" alt="Pesty clipboard manager strip on macOS showing color-coded clipboard history cards" />
+
+<section>
+  <h2>The Paste experience, free and open source</h2>
+  <p>Pesty keeps a history of everything you copy and brings it back with a keystroke. Press the global shortcut and a color-coded strip slides up from the bottom of your screen. Pick a clip with the arrow keys, press Return, and it pastes straight into the app you were using. It is a native SwiftUI reimplementation of the <a href="https://pasteapp.io">Paste</a> app — and it is free.</p>
+</section>
+
+<section>
+  <h2>Features</h2>
+  <div class="grid">
+    <div class="feat"><h3>Clipboard history</h3><p>Text, links, images, files, rich text, and colors — all remembered.</p></div>
+    <div class="feat"><h3>Color-coded cards</h3><p>Each clip is tinted by the app it came from, with a preview and timestamp.</p></div>
+    <div class="feat"><h3>Pinboards</h3><p>Save the snippets you reuse into named collections that never expire.</p></div>
+    <div class="feat"><h3>Instant search</h3><p>Just start typing to filter your whole clipboard history.</p></div>
+    <div class="feat"><h3>Keyboard-first</h3><p>Arrows to move, Return to paste, ⌘1–9 to quick-paste.</p></div>
+    <div class="feat"><h3>Private by default</h3><p>Everything stays on your Mac. No data collection, no network calls.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>How Pesty compares</h2>
+  <table>
+    <tr><th>&nbsp;</th><th>Pesty</th><th>Paste</th><th>Maccy</th></tr>
+    <tr><td>Price</td><td>Free / $19.99 on MAS</td><td>Subscription</td><td>Free</td></tr>
+    <tr><td>Open source</td><td>Yes (MIT)</td><td>No</td><td>Yes</td></tr>
+    <tr><td>Color-coded strip UI</td><td>Yes</td><td>Yes</td><td>No (list)</td></tr>
+    <tr><td>Pinboards</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Native (no Electron)</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Install</h2>
+  <pre>brew install --cask momenbasel/pesty/pesty</pre>
+  <p>Or download the signed, Apple-notarized <a href="https://github.com/momenbasel/pesty/releases/latest">DMG from GitHub</a>. Requires macOS 14 (Sonoma) or later. Universal — Apple Silicon and Intel.</p>
+</section>
+
+<section>
+  <h2>FAQ</h2>
+  <details><summary>Is Pesty really free?</summary><p>Yes — free and open source under the MIT license on GitHub, and installable with Homebrew. A paid convenience build is also on the Mac App Store.</p></details>
+  <details><summary>Is it a good Paste app alternative?</summary><p>Pesty reimplements the parts of Paste people use every day — the slide-up strip, color-coded cards, pinboards, search, and keyboard pasting — as a free, native, open-source app.</p></details>
+  <details><summary>Does it keep my clipboard private?</summary><p>Yes. Nothing leaves your Mac. Pesty has no servers, no analytics, and ignores clips marked concealed by password managers.</p></details>
+</section>
+
+<footer>
+  Pesty is free and open source under the MIT License · <a href="https://github.com/momenbasel/pesty">GitHub</a> · <a href="privacy.html">Privacy</a>
+  · Not affiliated with Paste (Wonder Warp / FIPLAB).
+</footer>
+</div>
+</body>
+</html>

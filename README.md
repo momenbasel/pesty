@@ -13,6 +13,8 @@ Your clipboard history as a beautiful, color-coded strip that slides up from the
 ![Platform](https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple)
 ![Universal](https://img.shields.io/badge/Universal-Apple%20Silicon%20%2B%20Intel-orange?style=flat-square)
 
+[**Website**](https://www.moamenbasel.com/pesty/) · [Download](https://github.com/momenbasel/pesty/releases/latest) · [Homebrew](#install) · [Mac App Store](https://apps.apple.com/app/id6784511397)
+
 <img src="docs/assets/screenshot-strip.png" width="900" alt="Pesty clipboard strip" />
 
 </div>
@@ -109,9 +111,33 @@ scripts/                build, icon, sign + notarize
 packaging/              Info.plist, entitlements, generated artifacts
 ```
 
-## How it compares to Paste
+## Pesty vs other Mac clipboard managers
 
-Pesty reimplements the parts of Paste people use every day — the strip, color-coded cards, pinboards, search, and keyboard-driven pasting. Paste is a polished commercial product with iCloud sync across iPhone/iPad/Mac, unlimited history tiers, and years of refinement. Pesty is a free, native, open-source take on the same core idea. If you love Paste, [buy it](https://pasteapp.io) — it's excellent. Pesty exists for people who want a free, hackable alternative.
+| | Pesty | Paste | Maccy |
+| --- | --- | --- | --- |
+| Price | **Free** / $19.99 on the Mac App Store | Subscription | Free |
+| Open source | **Yes (MIT)** | No | Yes |
+| Color-coded strip UI | Yes | Yes | No (list) |
+| Pinboards | Yes | Yes | No |
+| Source-app color coding | Yes | Yes | No |
+| Native (no Electron) | Yes | Yes | Yes |
+| Signed & notarized | Yes | Yes | Yes |
+
+Pesty reimplements the parts of Paste people use every day — the slide-up strip, color-coded cards, pinboards, search, and keyboard-driven pasting — as a free, native, open-source app. If you love Paste, [buy it](https://pasteapp.io); it's excellent. Pesty is for people who want a free, hackable **Paste app alternative**, or a prettier alternative to **Maccy** with a strip UI and pinboards.
+
+## FAQ
+
+**Is Pesty free?** Yes — free and open source (MIT) on GitHub and via Homebrew. A paid convenience build is on the Mac App Store.
+
+**Is Pesty a good clipboard manager for Mac?** It keeps a searchable history of everything you copy (text, links, images, files, colors) and pastes it back with a keystroke — with pinboards and a color-coded strip.
+
+**Does it keep my clipboard private?** Yes. Everything stays on your Mac — no servers, no analytics, no network calls — and password-manager clips are ignored.
+
+**What macOS does it need?** macOS 14 (Sonoma) or later, on Apple Silicon or Intel.
+
+> **Keywords:** clipboard manager for Mac, macOS clipboard history, free Paste app alternative, open-source clipboard manager, Maccy alternative, copy-paste history, clipboard pinboards.
+
+🔗 **Website:** [www.moamenbasel.com/pesty](https://www.moamenbasel.com/pesty/)
 
 ## Contributing
 
