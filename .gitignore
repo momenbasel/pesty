@@ -1,0 +1,15 @@
+.DS_Store
+.build/
+.swiftpm/
+*.xcodeproj
+*.xcuserstate
+DerivedData/
+
+packaging/Pesty.app/
+packaging/*.dmg
+packaging/*.zip
+packaging/*.icns
+packaging/icon_1024.png
+packaging/Pesty.iconset/
+
+*.log
