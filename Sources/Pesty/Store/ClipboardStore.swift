@@ -36,7 +36,12 @@ final class ClipboardStore {
             .appendingPathComponent("Pesty", isDirectory: true)
     }
 
+    static var isSandboxed: Bool {
+        ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+    }
+
     static var iCloudBase: URL? {
+        guard !isSandboxed else { return nil }
         let p = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs", isDirectory: true)
         guard FileManager.default.fileExists(atPath: p.path) else { return nil }
