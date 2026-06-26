@@ -13,3 +13,6 @@ packaging/icon_1024.png
 packaging/Pesty.iconset/
 
 *.log
+
+packaging/*.pkg
+packaging/*.provisionprofile
