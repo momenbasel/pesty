@@ -86,7 +86,9 @@ final class AppController: NSObject, NSApplicationDelegate {
     @objc private func menuSettings() { showSettings() }
     @objc private func menuClear() { store.clearHistory() }
     @objc private func menuQuit() { NSApp.terminate(nil) }
-    @objc private func menuAbout() {
+    @objc private func menuAbout() { showAbout() }
+
+    func showAbout() {
         NSApp.activate(ignoringOtherApps: true)
         NSApp.orderFrontStandardAboutPanel(options: [
             .applicationName: "Pesty",
@@ -95,6 +97,28 @@ final class AppController: NSObject, NSApplicationDelegate {
                 string: "A free, open-source clipboard manager for macOS.\nInspired by Paste.",
                 attributes: [.font: NSFont.systemFont(ofSize: 11)])
         ])
+    }
+
+    func toggleICloudSync() {
+        let enabling = !Settings.shared.iCloudSync
+        if enabling && !ClipboardStore.shared.iCloudAvailable {
+            let alert = NSAlert()
+            alert.messageText = "iCloud Drive Unavailable"
+            alert.informativeText = "Sign in to iCloud and enable iCloud Drive in System Settings to sync your clipboard across your Macs."
+            alert.runModal()
+            return
+        }
+        Settings.shared.iCloudSync = enabling
+        ClipboardStore.shared.setICloudSync(enabling)
+    }
+
+    static func restart() {
+        let path = Bundle.main.bundlePath
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", path]
+        try? task.run()
+        NSApp.terminate(nil)
     }
 
     func toggleBar() {

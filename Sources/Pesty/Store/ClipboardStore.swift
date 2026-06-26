@@ -23,23 +23,43 @@ final class ClipboardStore {
         set { Settings.shared.historyLimit = newValue; trimHistory() }
     }
 
-    private let storeURL: URL
-    private let imagesDir: URL
+    private var storeURL: URL
+    private var imagesDir: URL
+    private var baseDir: URL
     private var saveWorkItem: DispatchWorkItem?
 
-    private let baseDir: URL
+    private var fileWatch: DispatchSourceFileSystemObject?
+    private var ignoreWatchUntil: Date = .distantPast
+
+    static var localBase: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Pesty", isDirectory: true)
+    }
+
+    static var iCloudBase: URL? {
+        let p = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs", isDirectory: true)
+        guard FileManager.default.fileExists(atPath: p.path) else { return nil }
+        return p.appendingPathComponent("Pesty", isDirectory: true)
+    }
+
+    var iCloudAvailable: Bool { ClipboardStore.iCloudBase != nil }
 
     private init() {
-        let fm = FileManager.default
-        let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Pesty", isDirectory: true)
+        let base = (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil) ?? ClipboardStore.localBase
         baseDir = base
         imagesDir = base.appendingPathComponent("images", isDirectory: true)
         storeURL = base.appendingPathComponent("store.json")
+        prepareDirectories()
+        load()
+        if Settings.shared.iCloudSync { startWatching() }
+    }
+
+    private func prepareDirectories() {
+        let fm = FileManager.default
         try? fm.createDirectory(at: imagesDir, withIntermediateDirectories: true,
                                 attributes: [.posixPermissions: 0o700])
-        try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: base.path)
-        load()
+        try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: baseDir.path)
     }
 
     var visibleItems: [ClipItem] {
@@ -220,7 +240,102 @@ final class ClipboardStore {
     func saveNow() {
         let snap = Snapshot(history: history, pinboards: pinboards)
         guard let data = try? JSONEncoder().encode(snap) else { return }
+        ignoreWatchUntil = Date().addingTimeInterval(1.5)
         try? data.write(to: storeURL, options: .atomic)
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: storeURL.path)
+    }
+
+    func setICloudSync(_ enabled: Bool) {
+        stopWatching()
+        let target = (enabled ? ClipboardStore.iCloudBase : ClipboardStore.localBase) ?? ClipboardStore.localBase
+        let newImages = target.appendingPathComponent("images", isDirectory: true)
+        let newStore = target.appendingPathComponent("store.json")
+        let fm = FileManager.default
+        try? fm.createDirectory(at: newImages, withIntermediateDirectories: true,
+                                attributes: [.posixPermissions: 0o700])
+
+        if fm.fileExists(atPath: newStore.path),
+           let data = try? Data(contentsOf: newStore),
+           let snap = try? JSONDecoder().decode(Snapshot.self, from: data) {
+            copyImages(from: imagesDir, to: newImages)
+            baseDir = target; imagesDir = newImages; storeURL = newStore
+            mergeExternal(snap)
+        } else {
+            copyImages(from: imagesDir, to: newImages)
+            baseDir = target; imagesDir = newImages; storeURL = newStore
+            saveNow()
+        }
+        prepareDirectories()
+        if enabled { startWatching() }
+    }
+
+    private func copyImages(from src: URL, to dst: URL) {
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(at: src, includingPropertiesForKeys: nil) else { return }
+        for f in files where f.pathExtension == "png" {
+            let target = dst.appendingPathComponent(f.lastPathComponent)
+            if !fm.fileExists(atPath: target.path) { try? fm.copyItem(at: f, to: target) }
+        }
+    }
+
+    private func contentKey(_ item: ClipItem) -> String {
+        switch item.type {
+        case .image: return "img:" + (item.imageHash ?? item.imageFileName ?? item.id.uuidString)
+        case .color: return "col:" + (item.colorHex ?? "")
+        case .file:  return "file:" + item.fileURLs.joined(separator: "|")
+        default:     return "txt:" + (item.text ?? "")
+        }
+    }
+
+    private func mergeExternal(_ snap: Snapshot) {
+        let before = history.count
+        var combined = (history + snap.history).sorted { $0.createdAt > $1.createdAt }
+        var seen = Set<String>()
+        var merged: [ClipItem] = []
+        for it in combined where seen.insert(contentKey(it)).inserted { merged.append(it) }
+        history = Array(merged.prefix(historyLimit))
+
+        var byID: [UUID: Pinboard] = Dictionary(uniqueKeysWithValues: pinboards.map { ($0.id, $0) })
+        for b in snap.pinboards {
+            if var existing = byID[b.id] {
+                for it in b.items where !existing.items.contains(where: { $0.sameContent(as: it) }) {
+                    existing.items.append(it)
+                }
+                byID[b.id] = existing
+            } else {
+                byID[b.id] = b
+            }
+        }
+        pinboards = pinboards.map { byID[$0.id] ?? $0 }
+            + byID.values.filter { b in !pinboards.contains(where: { $0.id == b.id }) }
+
+        combined.removeAll()
+        selectFirst()
+        if history.count != before || !snap.history.isEmpty { saveNow() }
+    }
+
+    private func startWatching() {
+        stopWatching()
+        let fd = open(storeURL.path, O_EVTONLY)
+        guard fd >= 0 else { return }
+        let src = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: fd, eventMask: [.write, .rename, .delete], queue: .main)
+        src.setEventHandler { [weak self] in
+            guard let self else { return }
+            if Date() < self.ignoreWatchUntil { return }
+            if let data = try? Data(contentsOf: self.storeURL),
+               let snap = try? JSONDecoder().decode(Snapshot.self, from: data) {
+                self.mergeExternal(snap)
+            }
+            self.startWatching()
+        }
+        src.setCancelHandler { close(fd) }
+        src.resume()
+        fileWatch = src
+    }
+
+    private func stopWatching() {
+        fileWatch?.cancel()
+        fileWatch = nil
     }
 }

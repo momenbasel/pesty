@@ -16,6 +16,9 @@ struct SettingsView: View {
 private struct GeneralSettings: View {
     @Bindable private var settings = Settings.shared
     @State private var accessibilityGranted = AXIsProcessTrusted()
+    @State private var requestedGrant = false
+
+    private let poll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         Form {
@@ -33,28 +36,44 @@ private struct GeneralSettings: View {
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
                 VStack(alignment: .leading) {
                     LabeledContent("Bar height", value: "\(Int(settings.barHeight)) px")
-                    Slider(value: $settings.barHeight, in: 260...640, step: 20)
+                    Slider(value: $settings.barHeight, in: 300...720, step: 10)
                 }
             }
 
+            Section("Sync") {
+                Toggle("Sync clipboard via iCloud Drive", isOn: Binding(
+                    get: { settings.iCloudSync },
+                    set: { _ in AppController.shared.toggleICloudSync() }))
+                Text(ClipboardStore.shared.iCloudAvailable
+                     ? "Keeps your history and pinboards in sync across your Macs through iCloud Drive."
+                     : "Sign in to iCloud and enable iCloud Drive to use sync.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("Permissions") {
-                HStack {
+                HStack(spacing: 10) {
                     Image(systemName: accessibilityGranted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(accessibilityGranted ? .green : .orange)
+                        .font(.title3)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Accessibility")
                         Text(accessibilityGranted
-                             ? "Direct paste is enabled."
-                             : "Required to paste directly into other apps.")
+                             ? "Granted — direct paste is enabled."
+                             : (requestedGrant
+                                ? "Waiting… toggle Pesty on in System Settings."
+                                : "Required to paste directly into other apps."))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(accessibilityGranted ? .green : .secondary)
                     }
                     Spacer()
                     if !accessibilityGranted {
-                        Button("Grant…") {
+                        Button("Open Settings") {
+                            requestedGrant = true
                             PasteService.ensureAccessibility(prompt: true)
                             openAccessibilityPane()
                         }
+                    } else if requestedGrant {
+                        Button("Restart Pesty") { AppController.restart() }
                     }
                 }
             }
@@ -67,8 +86,9 @@ private struct GeneralSettings: View {
         }
         .formStyle(.grouped)
         .onAppear { accessibilityGranted = AXIsProcessTrusted() }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            accessibilityGranted = AXIsProcessTrusted()
+        .onReceive(poll) { _ in
+            let now = AXIsProcessTrusted()
+            if now != accessibilityGranted { accessibilityGranted = now }
         }
     }
 

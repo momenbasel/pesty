@@ -12,9 +12,7 @@ struct BarView: View {
         .overlay(alignment: .top) {
             VStack(spacing: 0) {
                 topBar
-                Divider().overlay(Color.white.opacity(0.08))
                 strip
-                footer
             }
         }
         .clipShape(RoundedCorners(radius: Theme.cornerRadius, corners: [.topLeft, .topRight]))
@@ -22,62 +20,70 @@ struct BarView: View {
     }
 
     private var topBar: some View {
-        HStack(spacing: 12) {
-            searchField
-                .frame(width: 220)
-
+        HStack(spacing: 14) {
+            syncButton
+            searchIndicator
             PinboardTabs()
                 .layoutPriority(1)
-
             Spacer(minLength: 8)
-
-            Text("\(store.visibleItems.count)")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(Theme.textSecondary)
-                .help("Items in view")
-
-            Button {
-                AppController.shared.showSettings()
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Theme.textSecondary)
-            }
-            .buttonStyle(.plain)
-            .help("Settings")
+            moreMenu
         }
-        .padding(.horizontal, 16)
-        .frame(height: 48)
+        .padding(.horizontal, 18)
+        .frame(height: 56)
     }
 
-    private var searchField: some View {
-        HStack(spacing: 7) {
+    private var syncButton: some View {
+        Button {
+            AppController.shared.toggleICloudSync()
+        } label: {
+            Image(systemName: settings.iCloudSync ? "checkmark.icloud.fill" : "arrow.triangle.2.circlepath")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(settings.iCloudSync ? Theme.selection : Theme.textSecondary)
+        }
+        .buttonStyle(.plain)
+        .help(settings.iCloudSync ? "iCloud sync on" : "Turn on iCloud sync")
+    }
+
+    private var searchIndicator: some View {
+        HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Theme.textTertiary)
-            if store.searchText.isEmpty {
-                Text("Type to search")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.textTertiary)
-            } else {
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(store.searchText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
+            if !store.searchText.isEmpty {
                 Text(store.searchText)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-            if !store.searchText.isEmpty {
                 Button { store.searchText = ""; store.selectFirst() } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textTertiary)
+                        .font(.system(size: 12)).foregroundStyle(Theme.textTertiary)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, store.searchText.isEmpty ? 0 : 10)
         .frame(height: 30)
-        .background(Theme.fieldBG, in: Capsule())
+        .background(store.searchText.isEmpty ? Color.clear : Theme.fieldBG, in: Capsule())
+        .animation(.easeOut(duration: 0.15), value: store.searchText.isEmpty)
+    }
+
+    private var moreMenu: some View {
+        Menu {
+            Button("Settings…") { AppController.shared.showSettings() }
+            Button("Clear History") { store.clearHistory() }
+            Divider()
+            Button("About Pesty") { AppController.shared.showAbout() }
+            Button("Quit Pesty") { NSApp.terminate(nil) }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .frame(width: 30, height: 30)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .frame(width: 34)
+        .fixedSize()
     }
 
     private var strip: some View {
@@ -89,20 +95,23 @@ struct BarView: View {
                                      index: index,
                                      selected: item.id == store.selectedID)
                             .id(item.id)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.92).combined(with: .opacity),
+                                removal: .opacity))
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+                .padding(.horizontal, 18)
+                .padding(.top, 4)
+                .padding(.bottom, 18)
+                .animation(.spring(response: 0.34, dampingFraction: 0.8), value: store.visibleItems.count)
             }
             .onChange(of: store.selectedID) { _, id in
                 guard let id else { return }
-                withAnimation(.easeOut(duration: 0.18)) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
                     proxy.scrollTo(id, anchor: .center)
                 }
             }
-            .overlay {
-                if store.visibleItems.isEmpty { emptyState }
-            }
+            .overlay { if store.visibleItems.isEmpty { emptyState } }
         }
         .frame(maxHeight: .infinity)
     }
@@ -119,31 +128,6 @@ struct BarView: View {
                 .foregroundStyle(Theme.textSecondary)
         }
     }
-
-    private var footer: some View {
-        HStack(spacing: 18) {
-            hint("return", "Paste")
-            hint("⌘C", "Copy")
-            hint("⌘⌫", "Delete")
-            hint("⌘1–9", "Quick paste")
-            Spacer()
-            hint("esc", "Close")
-        }
-        .font(.system(size: 11, weight: .medium))
-        .foregroundStyle(Theme.textTertiary)
-        .padding(.horizontal, 18)
-        .frame(height: 30)
-        .background(Color.black.opacity(0.18))
-    }
-
-    private func hint(_ key: String, _ label: String) -> some View {
-        HStack(spacing: 5) {
-            Text(key)
-                .padding(.horizontal, 5).padding(.vertical, 1.5)
-                .background(Color.white.opacity(0.10), in: RoundedRectangle(cornerRadius: 4))
-            Text(label)
-        }
-    }
 }
 
 struct RoundedCorners: Shape {
@@ -156,7 +140,6 @@ struct RoundedCorners: Shape {
         let tr = corners.contains(.topRight) ? radius : 0
         let bl = corners.contains(.bottomLeft) ? radius : 0
         let br = corners.contains(.bottomRight) ? radius : 0
-
         p.move(to: CGPoint(x: rect.minX + tl, y: rect.minY))
         p.addLine(to: CGPoint(x: rect.maxX - tr, y: rect.minY))
         p.addArc(center: CGPoint(x: rect.maxX - tr, y: rect.minY + tr), radius: tr,
