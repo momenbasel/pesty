@@ -4,6 +4,28 @@ All notable changes to Pesty are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-06-26
+
+Visual overhaul to match Paste, plus iCloud sync.
+
+### Added
+- iCloud Drive sync (opt-in) for history and pinboards across your Macs.
+- Live Accessibility permission status in Settings, with a Restart button.
+
+### Changed
+- Redesigned cards: per-source-app colored header band, app-icon tile, type
+  label, verbose relative time, and a footer with character count + quick-paste
+  number — a faithful match to Paste.
+- Spring animations for selection, hover, and scrolling; taller default strip.
+- Top bar now has a sync toggle, search indicator, a "Clipboard" tab, and a
+  "…" overflow menu.
+
+### Fixed
+- Search input and keyboard navigation reliability.
+- Removed the unnecessary Apple Events entitlement.
+
+[1.1.0]: https://github.com/momenbasel/pesty/releases/tag/v1.1.0
+
 ## [1.0.0] - 2026-06-26
 
 Initial public release.

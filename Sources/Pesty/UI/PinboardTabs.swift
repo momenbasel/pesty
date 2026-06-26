@@ -6,8 +6,9 @@ struct PinboardTabs: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                pill(title: "All Clips",
+                pill(title: "Clipboard",
                      dot: nil,
+                     icon: "clock",
                      selected: store.source == .history) {
                     store.source = .history; store.selectFirst()
                 }
@@ -39,24 +40,29 @@ struct PinboardTabs: View {
         }
     }
 
-    private func pill(title: String, dot: Color?, selected: Bool, action: @escaping () -> Void) -> some View {
+    private func pill(title: String, dot: Color?, icon: String? = nil,
+                      selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 6) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 11, weight: .semibold))
+                }
                 if let dot {
                     Circle().fill(dot).frame(width: 7, height: 7)
                 }
                 Text(title)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 12.5, weight: .medium))
                     .lineLimit(1)
             }
             .foregroundStyle(selected ? Theme.textPrimary : Theme.textSecondary)
             .padding(.horizontal, 12)
-            .frame(height: 28)
-            .background(selected ? Color.white.opacity(0.14) : Theme.fieldBG,
-                        in: Capsule())
+            .frame(height: 29)
+            .background(selected ? Theme.pillSelected : Theme.pillBG, in: Capsule())
         }
         .buttonStyle(.plain)
         .fixedSize()
+        .animation(.easeOut(duration: 0.15), value: selected)
     }
 
     private func addPinboard() {

@@ -20,6 +20,7 @@ final class Settings {
         static let ignoreConcealed = "ignoreConcealed"
         static let barHeight = "barHeight"
         static let onboarded = "onboarded"
+        static let iCloudSync = "iCloudSync"
     }
 
     var historyLimit: Int {
@@ -71,6 +72,10 @@ final class Settings {
         didSet { guard isLoaded else { return }; d.set(onboarded, forKey: Keys.onboarded) }
     }
 
+    var iCloudSync: Bool {
+        didSet { guard isLoaded else { return }; d.set(iCloudSync, forKey: Keys.iCloudSync) }
+    }
+
     private init() {
         d.register(defaults: [
             Keys.historyLimit: 500,
@@ -80,8 +85,9 @@ final class Settings {
             Keys.pasteDirectly: true,
             Keys.playSound: false,
             Keys.ignoreConcealed: true,
-            Keys.barHeight: 360.0,
-            Keys.onboarded: false
+            Keys.barHeight: 430.0,
+            Keys.onboarded: false,
+            Keys.iCloudSync: false
         ])
         historyLimit = d.integer(forKey: Keys.historyLimit)
         hotkeyKeyCode = d.integer(forKey: Keys.hotkeyKeyCode)
@@ -92,6 +98,7 @@ final class Settings {
         ignoreConcealed = d.bool(forKey: Keys.ignoreConcealed)
         barHeight = d.double(forKey: Keys.barHeight)
         onboarded = d.bool(forKey: Keys.onboarded)
+        iCloudSync = d.bool(forKey: Keys.iCloudSync)
         isLoaded = true
     }
 

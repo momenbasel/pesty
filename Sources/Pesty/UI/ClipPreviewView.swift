@@ -4,6 +4,7 @@ struct ClipPreviewView: View {
     let item: ClipItem
 
     private var store: ClipboardStore { ClipboardStore.shared }
+    private var headerColor: Color { SourceColor.color(for: item.sourceBundleID) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -14,7 +15,7 @@ struct ClipPreviewView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.black.opacity(0.12))
+        .background(Color.black.opacity(0.10))
     }
 
     private var header: some View {
@@ -37,7 +38,7 @@ struct ClipPreviewView: View {
 
             Spacer(minLength: 8)
 
-            Text(item.createdAt.clipRelative)
+            Text(item.createdAt.clipRelativeLong)
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundStyle(Theme.textTertiary)
         }
@@ -53,7 +54,7 @@ struct ClipPreviewView: View {
         case .file:
             filePreview
         case .link:
-            textPreview(item.text ?? "", accent: item.type.accent, monospaced: false)
+            textPreview(item.text ?? "", accent: headerColor, monospaced: false)
         case .richText:
             textPreview(item.text ?? "", accent: Theme.textPrimary, monospaced: false)
         case .text:
@@ -97,7 +98,7 @@ struct ClipPreviewView: View {
             HStack(spacing: 10) {
                 Image(systemName: "doc.fill")
                     .font(.system(size: 30, weight: .medium))
-                    .foregroundStyle(item.type.accent)
+                    .foregroundStyle(headerColor)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.fileURLs.count == 1 ? "1 file" : "\(item.fileURLs.count) files")
@@ -128,7 +129,7 @@ struct ClipPreviewView: View {
             }
         }
         .padding(14)
-        .background(Theme.cardBG, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Theme.cardBody, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private func textPreview(_ text: String, accent: Color, monospaced: Bool) -> some View {
@@ -143,7 +144,7 @@ struct ClipPreviewView: View {
                 .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .padding(14)
-        .background(Theme.cardBG, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Theme.cardBody, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private func placeholder(symbol: String, text: String) -> some View {
@@ -156,14 +157,14 @@ struct ClipPreviewView: View {
                 .foregroundStyle(Theme.textTertiary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.cardBG, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Theme.cardBody, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private var footer: some View {
         HStack(spacing: 8) {
             Label(item.type.label.uppercased(), systemImage: item.type.symbol)
                 .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(item.type.accent)
+                .foregroundStyle(headerColor)
                 .labelStyle(.titleAndIcon)
 
             Spacer()

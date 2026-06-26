@@ -25,15 +25,16 @@ It is a faithful, native reimplementation of the Paste experience — built in *
 
 ## Features
 
-- **Slide-up strip** — full-width, translucent bar that animates up from the bottom of the active screen.
-- **Color-coded cards** — every clip is a card showing the source app icon, an editable title, when it was copied, a preview, and a footer label (`TEXT`, `LINK`, `IMAGE`, `FILE`, `COLOR`, `RICH TEXT`) with a character count.
+- **Slide-up strip** — full-width, translucent bar that springs up from the bottom of the active screen.
+- **Color-coded cards** — each clip has a header band tinted per source app (consistent per app), with the app icon, type label, when it was copied, a preview, and a footer showing character count and a quick-paste number.
 - **Large selected preview** — the highlighted clip expands into a readable preview pane for longer text, images, files, links, and colors.
 - **All content types** — plain text, rich text, links, images, files, and colors.
 - **Pinboards** — save clips you reuse into named, color-tagged collections that never expire.
+- **iCloud sync** — optionally keep your history and pinboards in sync across your Macs via iCloud Drive.
 - **Instant search** — start typing to filter your whole history.
 - **Keyboard-first** — arrow keys to move, `return` to paste, `⌘1`–`⌘9` to quick-paste, `⌘⌫` to delete, `esc` to close.
 - **Paste directly** — drops the clip into the app you were using, no manual `⌘V` needed.
-- **Privacy-aware** — ignores clips marked concealed by password managers.
+- **Privacy-aware** — ignores clips marked concealed by password managers; history stored with `0600` permissions.
 - **Menu-bar app** — runs quietly as a menu-bar item, optional launch at login.
 - **Native & light** — a single universal `.app`, no Electron, no background web stack.
 
@@ -115,7 +116,7 @@ Pesty reimplements the parts of Paste people use every day — the strip, color-
 
 ## Contributing
 
-PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first issues: drag-and-drop out of cards, strip resize handle, iCloud/file sync, more content-type renderers.
+PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first issues: drag-and-drop out of cards, strip resize handle, iOS/iPad companion, more content-type renderers.
 
 ## License
 
