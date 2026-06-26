@@ -15,7 +15,9 @@ Your clipboard history as a beautiful, color-coded strip that slides up from the
 
 [**Website**](https://www.moamenbasel.com/pesty/) · [Download](https://github.com/momenbasel/pesty/releases/latest) · [Homebrew](#install) · [Mac App Store](https://apps.apple.com/app/id6784511397)
 
-<img src="docs/assets/screenshot-strip.png" width="900" alt="Pesty clipboard strip" />
+<img src="docs/assets/demo.gif" width="820" alt="Pesty clipboard manager demo — color-coded clipboard strip with keyboard navigation on macOS" />
+
+### ⭐ If Pesty saved you a Paste subscription, star the repo — it genuinely helps.
 
 </div>
 
