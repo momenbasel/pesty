@@ -27,6 +27,7 @@ It is a faithful, native reimplementation of the Paste experience — built in *
 
 - **Slide-up strip** — full-width, translucent bar that springs up from the bottom of the active screen.
 - **Color-coded cards** — each clip has a header band tinted per source app (consistent per app), with the app icon, type label, when it was copied, a preview, and a footer showing character count and a quick-paste number.
+- **Large selected preview** — the highlighted clip expands into a readable preview pane for longer text, images, files, links, and colors.
 - **All content types** — plain text, rich text, links, images, files, and colors.
 - **Pinboards** — save clips you reuse into named, color-tagged collections that never expire.
 - **iCloud sync** — optionally keep your history and pinboards in sync across your Macs via iCloud Drive.
@@ -115,7 +116,7 @@ Pesty reimplements the parts of Paste people use every day — the strip, color-
 
 ## Contributing
 
-PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first issues: large preview pane, drag-and-drop out of cards, strip resize handle, iOS/iPad companion, more content-type renderers.
+PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first issues: drag-and-drop out of cards, strip resize handle, iOS/iPad companion, more content-type renderers.
 
 ## License
 

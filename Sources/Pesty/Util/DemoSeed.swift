@@ -5,7 +5,7 @@ extension ClipboardStore {
         let now = Date()
         let demo: [ClipItem] = [
             ClipItem(type: .text,
-                     text: "The quickest way to paste is to press Return on the highlighted card.",
+                     text: "The quickest way to paste is to press Return on the highlighted card.\n\nThe preview pane gives the selected clip enough room for longer notes, snippets, links, files, images, and colors without opening a separate window.",
                      sourceBundleID: "com.apple.Notes", sourceAppName: "Notes",
                      createdAt: now.addingTimeInterval(-12)),
             ClipItem(type: .link,

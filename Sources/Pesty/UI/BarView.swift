@@ -12,7 +12,7 @@ struct BarView: View {
         .overlay(alignment: .top) {
             VStack(spacing: 0) {
                 topBar
-                strip
+                content
             }
         }
         .clipShape(RoundedCorners(radius: Theme.cornerRadius, corners: [.topLeft, .topRight]))
@@ -84,6 +84,36 @@ struct BarView: View {
         .menuIndicator(.hidden)
         .frame(width: 34)
         .fixedSize()
+    }
+
+    private var content: some View {
+        GeometryReader { geometry in
+            contentLayout(width: geometry.size.width)
+        }
+    }
+
+    private func contentLayout(width: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            strip
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if let item = store.selectedItem, shouldShowPreview(for: width) {
+                Divider().overlay(Color.white.opacity(0.08))
+                ClipPreviewView(item: item)
+                    .frame(width: previewWidth(for: width))
+                    .transition(.opacity.combined(with: .move(edge: .trailing)))
+            }
+        }
+        .animation(.spring(response: 0.32, dampingFraction: 0.82), value: store.selectedID)
+        .animation(.spring(response: 0.34, dampingFraction: 0.8), value: store.visibleItems.count)
+    }
+
+    private func shouldShowPreview(for width: CGFloat) -> Bool {
+        width >= 920
+    }
+
+    private func previewWidth(for width: CGFloat) -> CGFloat {
+        min(440, max(320, width * 0.30))
     }
 
     private var strip: some View {
