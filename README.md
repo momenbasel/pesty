@@ -4,7 +4,7 @@
 
 # Pesty
 
-**A free, open-source clipboard manager for macOS — inspired by [Paste](https://pasteapp.io).**
+**A free, open-source clipboard manager for macOS - inspired by [Paste](https://pasteapp.io).**
 
 Your clipboard history as a beautiful, color-coded strip that slides up from the bottom of your screen.
 
@@ -17,11 +17,11 @@ Your clipboard history as a beautiful, color-coded strip that slides up from the
 
 <a href="https://apps.apple.com/us/app/pesty-clipboard-manager/id6784511397"><img src="https://tools.applemediaservices.com/api/badges/download-on-the-mac-app-store/black/en-us?size=250x83" alt="Download Pesty on the Mac App Store" height="56" /></a>
 
-<sub>Pesty is **free and open source**. The one-time fee on the Mac App Store is optional — it only helps cover the yearly Apple Developer Program fee that keeps the app signed and notarized. You never have to pay it: get the exact same app for free via [Homebrew](#install) or [direct download](https://github.com/momenbasel/pesty/releases/latest).</sub>
+<sub>Pesty is **free and open source**. The one-time fee on the Mac App Store is optional - it only helps cover the yearly Apple Developer Program fee that keeps the app signed and notarized. You never have to pay it: get the exact same app for free via [Homebrew](#install) or [direct download](https://github.com/momenbasel/pesty/releases/latest).</sub>
 
-<img src="docs/assets/demo.gif" width="820" alt="Pesty clipboard manager demo — color-coded clipboard strip with keyboard navigation on macOS" />
+<img src="docs/assets/demo.gif" width="820" alt="Pesty clipboard manager demo - color-coded clipboard strip with keyboard navigation on macOS" />
 
-### ⭐ If Pesty saved you a Paste subscription, star the repo — it genuinely helps.
+### ⭐ If Pesty saved you a Paste subscription, star the repo - it genuinely helps.
 
 </div>
 
@@ -29,21 +29,21 @@ Your clipboard history as a beautiful, color-coded strip that slides up from the
 
 Pesty keeps a history of everything you copy and lets you get it back instantly. Hit a global hotkey, the strip slides up, you pick a clip with the arrow keys (or `⌘1`–`⌘9`), press `return`, and it pastes straight into whatever app you were in.
 
-It is a faithful, native reimplementation of the Paste experience — built in **Swift + SwiftUI**, with **zero third-party dependencies**, fully **signed and notarized** by Apple, and **free forever**.
+It is a faithful, native reimplementation of the Paste experience - built in **Swift + SwiftUI**, with **zero third-party dependencies**, fully **signed and notarized** by Apple, and **free forever**.
 
 ## Features
 
-- **Slide-up strip** — full-width, translucent bar that springs up from the bottom of the active screen.
-- **Color-coded cards** — each clip has a header band tinted per source app (consistent per app), with the app icon, type label, when it was copied, a preview, and a footer showing character count and a quick-paste number.
-- **All content types** — plain text, rich text, links, images, files, and colors.
-- **Pinboards** — save clips you reuse into named, color-tagged collections that never expire.
-- **iCloud sync** — optionally keep your history and pinboards in sync across your Macs via iCloud Drive.
-- **Instant search** — start typing to filter your whole history.
-- **Keyboard-first** — arrow keys to move, `return` to paste, `⌘1`–`⌘9` to quick-paste, `⌘⌫` to delete, `esc` to close.
-- **Paste directly** — drops the clip into the app you were using, no manual `⌘V` needed.
-- **Privacy-aware** — ignores clips marked concealed by password managers; history stored with `0600` permissions.
-- **Menu-bar app** — runs quietly as a menu-bar item, optional launch at login.
-- **Native & light** — a single universal `.app`, no Electron, no background web stack.
+- **Slide-up strip** - full-width, translucent bar that springs up from the bottom of the active screen.
+- **Color-coded cards** - each clip has a header band tinted per source app (consistent per app), with the app icon, type label, when it was copied, a preview, and a footer showing character count and a quick-paste number.
+- **All content types** - plain text, rich text, links, images, files, and colors.
+- **Pinboards** - save clips you reuse into named, color-tagged collections that never expire.
+- **iCloud sync** - optionally keep your history and pinboards in sync across your Macs via iCloud Drive.
+- **Instant search** - start typing to filter your whole history.
+- **Keyboard-first** - arrow keys to move, `return` to paste, `⌘1`–`⌘9` to quick-paste, `⌘⌫` to delete, `esc` to close.
+- **Paste directly** - drops the clip into the app you were using, no manual `⌘V` needed.
+- **Privacy-aware** - ignores clips marked concealed by password managers; history stored with `0600` permissions.
+- **Menu-bar app** - runs quietly as a menu-bar item, optional launch at login.
+- **Native & light** - a single universal `.app`, no Electron, no background web stack.
 
 ## Install
 
@@ -65,8 +65,8 @@ The build is signed with a Developer ID and notarized by Apple, so it opens with
 
 1. Press **`⌘⇧V`** (the default shortcut) to open the strip.
 2. Pick a clip and press `return`.
-   - **Direct-download / Homebrew build:** the first time you paste, macOS asks for **Accessibility** permission — grant it so Pesty can paste directly into other apps. You can change this anytime in **Settings → Permissions**.
-   - **Mac App Store build:** fully sandboxed and requests **no** permissions — the clip is copied and focus returns to your app, so just press **`⌘V`** to paste.
+   - **Direct-download / Homebrew build:** the first time you paste, macOS asks for **Accessibility** permission - grant it so Pesty can paste directly into other apps. You can change this anytime in **Settings → Permissions**.
+   - **Mac App Store build:** fully sandboxed and requests **no** permissions - the clip is copied and focus returns to your app, so just press **`⌘V`** to paste.
 
 ## Keyboard shortcuts
 
@@ -131,15 +131,15 @@ packaging/              Info.plist, entitlements, generated artifacts
 | Native (no Electron) | Yes | Yes | Yes |
 | Signed & notarized | Yes | Yes | Yes |
 
-Pesty reimplements the parts of Paste people use every day — the slide-up strip, color-coded cards, pinboards, search, and keyboard-driven pasting — as a free, native, open-source app. If you love Paste, [buy it](https://pasteapp.io); it's excellent. Pesty is for people who want a free, hackable **Paste app alternative**, or a prettier alternative to **Maccy** with a strip UI and pinboards.
+Pesty reimplements the parts of Paste people use every day - the slide-up strip, color-coded cards, pinboards, search, and keyboard-driven pasting - as a free, native, open-source app. If you love Paste, [buy it](https://pasteapp.io); it's excellent. Pesty is for people who want a free, hackable **Paste app alternative**, or a prettier alternative to **Maccy** with a strip UI and pinboards.
 
 ## FAQ
 
-**Is Pesty free?** Yes — free and open source (MIT) on GitHub and via Homebrew. The Mac App Store build carries a small one-time fee, but that's optional: it only helps cover the yearly Apple Developer Program fee that keeps the app signed and notarized. It's the same app either way.
+**Is Pesty free?** Yes - free and open source (MIT) on GitHub and via Homebrew. The Mac App Store build carries a small one-time fee, but that's optional: it only helps cover the yearly Apple Developer Program fee that keeps the app signed and notarized. It's the same app either way.
 
-**Is Pesty a good clipboard manager for Mac?** It keeps a searchable history of everything you copy (text, links, images, files, colors) and pastes it back with a keystroke — with pinboards and a color-coded strip.
+**Is Pesty a good clipboard manager for Mac?** It keeps a searchable history of everything you copy (text, links, images, files, colors) and pastes it back with a keystroke - with pinboards and a color-coded strip.
 
-**Does it keep my clipboard private?** Yes. Everything stays on your Mac — no servers, no analytics, no network calls — and password-manager clips are ignored.
+**Does it keep my clipboard private?** Yes. Everything stays on your Mac - no servers, no analytics, no network calls - and password-manager clips are ignored.
 
 **What macOS does it need?** macOS 14 (Sonoma) or later, on Apple Silicon or Intel.
 
@@ -149,7 +149,7 @@ Pesty reimplements the parts of Paste people use every day — the slide-up stri
 
 ## Contributing
 
-PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first issues: large preview pane, drag-and-drop out of cards, strip resize handle, iOS/iPad companion, more content-type renderers.
+PRs welcome - see [CONTRIBUTING.md](CONTRIBUTING.md). Good first issues: large preview pane, drag-and-drop out of cards, strip resize handle, iOS/iPad companion, more content-type renderers.
 
 ## License
 
