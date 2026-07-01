@@ -13,7 +13,11 @@ Your clipboard history as a beautiful, color-coded strip that slides up from the
 ![Platform](https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple)
 ![Universal](https://img.shields.io/badge/Universal-Apple%20Silicon%20%2B%20Intel-orange?style=flat-square)
 
-[**Website**](https://www.moamenbasel.com/pesty/) · [Download](https://github.com/momenbasel/pesty/releases/latest) · [Homebrew](#install) · [Mac App Store](https://apps.apple.com/app/id6784511397)
+[**Website**](https://www.moamenbasel.com/pesty/) · [Download](https://github.com/momenbasel/pesty/releases/latest) · [Homebrew](#install) · [Mac App Store](https://apps.apple.com/us/app/pesty-clipboard-manager/id6784511397)
+
+<a href="https://apps.apple.com/us/app/pesty-clipboard-manager/id6784511397"><img src="https://tools.applemediaservices.com/api/badges/download-on-the-mac-app-store/black/en-us?size=250x83" alt="Download Pesty on the Mac App Store" height="56" /></a>
+
+<sub>Pesty is **free and open source**. The one-time fee on the Mac App Store is optional — it only helps cover the yearly Apple Developer Program fee that keeps the app signed and notarized. You never have to pay it: get the exact same app for free via [Homebrew](#install) or [direct download](https://github.com/momenbasel/pesty/releases/latest).</sub>
 
 <img src="docs/assets/demo.gif" width="820" alt="Pesty clipboard manager demo — color-coded clipboard strip with keyboard navigation on macOS" />
 
@@ -119,7 +123,7 @@ packaging/              Info.plist, entitlements, generated artifacts
 
 | | Pesty | Paste | Maccy |
 | --- | --- | --- | --- |
-| Price | **Free** / $19.99 on the Mac App Store | Subscription | Free |
+| Price | **Free** (optional one-time fee on the Mac App Store) | Subscription | Free |
 | Open source | **Yes (MIT)** | No | Yes |
 | Color-coded strip UI | Yes | Yes | No (list) |
 | Pinboards | Yes | Yes | No |
@@ -131,7 +135,7 @@ Pesty reimplements the parts of Paste people use every day — the slide-up stri
 
 ## FAQ
 
-**Is Pesty free?** Yes — free and open source (MIT) on GitHub and via Homebrew. A paid convenience build is on the Mac App Store.
+**Is Pesty free?** Yes — free and open source (MIT) on GitHub and via Homebrew. The Mac App Store build carries a small one-time fee, but that's optional: it only helps cover the yearly Apple Developer Program fee that keeps the app signed and notarized. It's the same app either way.
 
 **Is Pesty a good clipboard manager for Mac?** It keeps a searchable history of everything you copy (text, links, images, files, colors) and pastes it back with a keystroke — with pinboards and a color-coded strip.
 
