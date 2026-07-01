@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pesty — Support &amp; Help</title>
+<meta name="description" content="Support for Pesty, the free clipboard manager for macOS. Get help, troubleshoot pasting, permissions, iCloud sync, and history, or contact the developer." />
+<meta name="author" content="Moamen Basel" />
+<meta name="theme-color" content="#5B6CFF" />
+<link rel="canonical" href="https://www.moamenbasel.com/pesty/support.html" />
+<link rel="icon" type="image/png" href="assets/icon.png" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Pesty" />
+<meta property="og:title" content="Pesty — Support &amp; Help" />
+<meta property="og:description" content="Get help with Pesty for macOS: pasting, permissions, iCloud sync, history, and how to contact support." />
+<meta property="og:url" content="https://www.moamenbasel.com/pesty/support.html" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"How do I paste a clip?","acceptedAnswer":{"@type":"Answer","text":"Open Pesty with your shortcut (default Shift-Command-V), use the arrow keys to pick a clip, then press Return. On the Mac App Store version this copies the clip and returns focus to your app, so press Command-V to paste. The open-source build can also paste directly for you if you enable Accessibility."}},
+    {"@type":"Question","name":"Where is my clipboard history stored?","acceptedAnswer":{"@type":"Answer","text":"Entirely on your Mac, inside the app's private container. Pesty has no servers and makes no network calls. Nothing is uploaded unless you turn on optional iCloud Drive sync."}},
+    {"@type":"Question","name":"How do I contact Pesty support?","acceptedAnswer":{"@type":"Answer","text":"Email ceo@greycorelabs.com or open an issue at github.com/momenbasel/pesty/issues. Most questions are answered within two business days."}}
+  ]
+}
+</script>
+<style>
+  :root { --bg:#0e0e14; --card:#16161f; --fg:#f2f2f7; --muted:#a0a0b4; --accent:#6c7bff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,system-ui,"Segoe UI",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .wrap { max-width:760px; margin:0 auto; padding:0 22px; }
+  header { text-align:center; padding:64px 0 24px; }
+  header img.logo { width:96px; height:96px; }
+  h1 { font-size:40px; margin:18px 0 6px; }
+  .tag { color:var(--muted); font-size:19px; margin:0 0 22px; }
+  h2 { font-size:24px; margin-top:44px; }
+  p { margin:12px 0; }
+  code { background:var(--card); padding:3px 8px; border-radius:6px; font-size:15px; }
+  .card { background:var(--card); border:1px solid #20202c; border-radius:12px; padding:18px 20px; margin:16px 0; }
+  .card h3 { margin:0 0 6px; font-size:18px; }
+  .card p { margin:0; color:var(--muted); font-size:15px; }
+  .contact { display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; }
+  .btn { background:var(--accent); color:#fff; padding:11px 20px; border-radius:10px; font-weight:600; }
+  .btn.alt { background:var(--card); color:var(--fg); border:1px solid #2a2a3a; }
+  details { background:var(--card); border:1px solid #20202c; border-radius:10px; padding:14px 18px; margin:10px 0; }
+  summary { cursor:pointer; font-weight:600; font-size:16px; }
+  details p, details ul { color:var(--muted); font-size:15px; margin:10px 0 2px; }
+  details ul { padding-left:20px; }
+  kbd { background:#22222e; border:1px solid #33333f; border-radius:5px; padding:1px 7px; font-size:13px; font-family:-apple-system,system-ui,sans-serif; }
+  footer { color:var(--muted); text-align:center; padding:48px 0; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <img class="logo" src="assets/icon.png" alt="Pesty clipboard manager app icon" />
+  <h1>Pesty Support</h1>
+  <p class="tag">Help, troubleshooting, and how to reach us.</p>
+</header>
+
+<section>
+  <h2>Get help</h2>
+  <p>Have a question, hit a bug, or want to request a feature? Reach out any of these ways and we will get back to you, usually within two business days.</p>
+  <div class="contact">
+    <a class="btn" href="mailto:ceo@greycorelabs.com?subject=Pesty%20Support">Email support</a>
+    <a class="btn alt" href="https://github.com/momenbasel/pesty/issues">Open a GitHub issue</a>
+    <a class="btn alt" href="https://github.com/momenbasel/pesty/issues/new">Report a bug</a>
+  </div>
+  <p style="margin-top:14px;color:var(--muted);font-size:15px;">Email: <a href="mailto:ceo@greycorelabs.com">ceo@greycorelabs.com</a></p>
+</section>
+
+<section>
+  <h2>Common questions</h2>
+
+  <details open>
+    <summary>How do I paste a clip?</summary>
+    <p>Open Pesty with your keyboard shortcut (default <kbd>⇧⌘V</kbd>). Use the arrow keys to pick a clip and press <kbd>Return</kbd>, or press <kbd>⌘1</kbd>–<kbd>⌘9</kbd> to grab one of the first nine clips.</p>
+    <ul>
+      <li><strong>Mac App Store version:</strong> selecting a clip copies it and returns focus to the app you were using — then press <kbd>⌘V</kbd> to paste. This version is fully sandboxed and needs no special permissions.</li>
+      <li><strong>Open-source / direct-download version:</strong> it can paste directly into the active app for you. Turn on <em>Paste directly into the active app</em> in Settings and grant Accessibility when prompted.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>Pesty is not saving what I copy</summary>
+    <ul>
+      <li>Make sure Pesty is running — look for its icon in the menu bar. Open it with <kbd>⇧⌘V</kbd>.</li>
+      <li><em>Ignore passwords</em> is on by default, so clips marked concealed by password managers are intentionally skipped.</li>
+      <li>Check the <em>History limit</em> in Settings if older clips are dropping off.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>How do I change the keyboard shortcut?</summary>
+    <p>Open Settings (menu bar icon → Settings, or <kbd>⌘,</kbd>) and click the shortcut field next to <em>Show Pesty</em>, then press the key combination you want.</p>
+  </details>
+
+  <details>
+    <summary>Is my clipboard private?</summary>
+    <p>Yes. Everything stays on your Mac inside the app's private container. Pesty has no servers, no analytics, and makes no network calls. See the <a href="privacy.html">Privacy Policy</a> for details.</p>
+  </details>
+
+  <details>
+    <summary>How does iCloud sync work?</summary>
+    <p>Sync is optional and off by default. When enabled in Settings, your history and pinboards sync between your own Macs through your iCloud Drive. Make sure you are signed in to iCloud and that iCloud Drive is enabled in System Settings. The developer never has access to this data.</p>
+  </details>
+
+  <details>
+    <summary>How do I clear my history or reset Pesty?</summary>
+    <p>Open Settings → <em>Data</em> → <em>Clear Clipboard History</em>. This permanently removes stored clips from your Mac.</p>
+  </details>
+
+  <details>
+    <summary>How do I uninstall Pesty?</summary>
+    <ul>
+      <li><strong>Mac App Store:</strong> delete Pesty from Launchpad or the Applications folder.</li>
+      <li><strong>Homebrew:</strong> run <code>brew uninstall --cask pesty</code>.</li>
+      <li><strong>DMG install:</strong> drag Pesty from Applications to the Trash.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>What are the system requirements?</summary>
+    <p>macOS 14 (Sonoma) or later. Universal — runs natively on Apple Silicon and Intel Macs.</p>
+  </details>
+</section>
+
+<footer>
+  Pesty is free and open source under the MIT License ·
+  <a href="index.html">Home</a> · <a href="privacy.html">Privacy</a> ·
+  <a href="https://github.com/momenbasel/pesty">GitHub</a><br />
+  Not affiliated with Paste (Wonder Warp / FIPLAB).
+</footer>
+</div>
+</body>
+</html>

@@ -15,10 +15,12 @@ struct SettingsView: View {
 
 private struct GeneralSettings: View {
     @Bindable private var settings = Settings.shared
+    #if !MAS
     @State private var accessibilityGranted = AXIsProcessTrusted()
     @State private var requestedGrant = false
 
     private let poll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    #endif
 
     var body: some View {
         Form {
@@ -30,7 +32,9 @@ private struct GeneralSettings: View {
             }
 
             Section("Behavior") {
+                #if !MAS
                 Toggle("Paste directly into the active app", isOn: $settings.pasteDirectly)
+                #endif
                 Toggle("Ignore passwords (concealed clips)", isOn: $settings.ignoreConcealed)
                 Toggle("Play sound on paste", isOn: $settings.playSound)
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
@@ -38,6 +42,10 @@ private struct GeneralSettings: View {
                     LabeledContent("Bar height", value: "\(Int(settings.barHeight)) px")
                     Slider(value: $settings.barHeight, in: 300...720, step: 10)
                 }
+                #if MAS
+                Text("Select a clip to copy it, then press ⌘V to paste it into your app.")
+                    .font(.caption).foregroundStyle(.secondary)
+                #endif
             }
 
             Section("Sync") {
@@ -50,6 +58,7 @@ private struct GeneralSettings: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
 
+            #if !MAS
             Section("Permissions") {
                 HStack(spacing: 10) {
                     Image(systemName: accessibilityGranted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
@@ -77,6 +86,7 @@ private struct GeneralSettings: View {
                     }
                 }
             }
+            #endif
 
             Section("Data") {
                 Button("Clear Clipboard History", role: .destructive) {
@@ -85,18 +95,22 @@ private struct GeneralSettings: View {
             }
         }
         .formStyle(.grouped)
+        #if !MAS
         .onAppear { accessibilityGranted = AXIsProcessTrusted() }
         .onReceive(poll) { _ in
             let now = AXIsProcessTrusted()
             if now != accessibilityGranted { accessibilityGranted = now }
         }
+        #endif
     }
 
+    #if !MAS
     private func openAccessibilityPane() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
         }
     }
+    #endif
 }
 
 private struct AboutView: View {

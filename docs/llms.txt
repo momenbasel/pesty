@@ -17,6 +17,7 @@ Pesty shows a slide-up strip of color-coded clipboard cards (tinted per source a
 
 ## Links
 - Website: https://www.moamenbasel.com/pesty/
+- Support: https://www.moamenbasel.com/pesty/support.html
 - Source code: https://github.com/momenbasel/pesty
 - Releases: https://github.com/momenbasel/pesty/releases
 - Privacy policy: https://www.moamenbasel.com/pesty/privacy.html

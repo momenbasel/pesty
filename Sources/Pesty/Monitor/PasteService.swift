@@ -43,13 +43,23 @@ enum PasteService {
         monitor.suppressUntilChangeCount = change
         if Settings.shared.playSound { NSSound(named: "Pop")?.play() }
 
-        let directly = Settings.shared.pasteDirectly && AXIsProcessTrusted()
-        guard directly, let target = targetApp, !target.isTerminated else { return }
+        guard let target = targetApp, !target.isTerminated else { return }
 
+        #if MAS
+        // Mac App Store (sandboxed) build: copy the clip and return focus to the
+        // app the user came from so they can paste with ⌘V. No Accessibility
+        // APIs and no synthetic keystrokes are used.
+        target.activate()
+        #else
+        // Direct-download build: optionally paste straight into the active app by
+        // synthesizing ⌘V. This requires the user's Accessibility grant.
+        guard Settings.shared.pasteDirectly && AXIsProcessTrusted() else { return }
         target.activate()
         waitForFrontmost(target, attempts: 20)
+        #endif
     }
 
+    #if !MAS
     private static func waitForFrontmost(_ app: NSRunningApplication, attempts: Int) {
         guard attempts > 0, !app.isTerminated else { return }
         if NSWorkspace.shared.frontmostApplication?.processIdentifier == app.processIdentifier {
@@ -78,4 +88,5 @@ enum PasteService {
         let opts = [key: prompt] as CFDictionary
         return AXIsProcessTrustedWithOptions(opts)
     }
+    #endif
 }

@@ -60,7 +60,9 @@ The build is signed with a Developer ID and notarized by Apple, so it opens with
 ## First run
 
 1. Press **`⌘⇧V`** (the default shortcut) to open the strip.
-2. The first time you paste, macOS asks for **Accessibility** permission — grant it so Pesty can paste into other apps. You can change this anytime in **Settings → Permissions**.
+2. Pick a clip and press `return`.
+   - **Direct-download / Homebrew build:** the first time you paste, macOS asks for **Accessibility** permission — grant it so Pesty can paste directly into other apps. You can change this anytime in **Settings → Permissions**.
+   - **Mac App Store build:** fully sandboxed and requests **no** permissions — the clip is copied and focus returns to your app, so just press **`⌘V`** to paste.
 
 ## Keyboard shortcuts
 

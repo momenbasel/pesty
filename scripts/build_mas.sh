@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VERSION="${VERSION:-1.1.0}"
-BUILD="${BUILD:-3}"
+BUILD="${BUILD:-5}"
 APP="packaging/Pesty.app"
 PKG="packaging/Pesty-MAS-$VERSION.pkg"
 ENT="packaging/Pesty-MAS.entitlements"
@@ -13,9 +13,9 @@ INSTALLER_IDENTITY="${INSTALLER_IDENTITY:-3rd Party Mac Developer Installer: Moa
 
 [ -f "$PROFILE" ] || { echo "Missing provisioning profile at $PROFILE"; exit 1; }
 
-echo "==> Building universal release binary"
-swift build -c release --arch arm64 --arch x86_64
-BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/Pesty"
+echo "==> Building universal release binary (sandboxed, no Accessibility — MAS flag)"
+swift build -c release --arch arm64 --arch x86_64 -Xswiftc -DMAS
+BIN="$(swift build -c release --arch arm64 --arch x86_64 -Xswiftc -DMAS --show-bin-path)/Pesty"
 bash scripts/make_icon.sh >/dev/null
 
 echo "==> Assembling $APP"
