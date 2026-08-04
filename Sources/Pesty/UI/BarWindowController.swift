@@ -64,39 +64,41 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
         let vf = screen.visibleFrame
         let height = min(CGFloat(Settings.shared.barHeight), vf.height)
         let onScreen = NSRect(x: vf.minX, y: vf.minY, width: vf.width, height: height)
-        let offScreen = NSRect(x: vf.minX, y: vf.minY - height, width: vf.width, height: height)
 
-        // A hide() still animating owns the panel's frame. Repositioning under it makes
-        // the panel interpolate from the old display's frame to the new one, so it
-        // visibly flies across screens instead of sliding up. A zero-duration animation
-        // replaces the in-flight one before we stage the slide.
+        // The panel stays parked at its final frame and the content slides up *inside*
+        // it. Animating the window frame itself is not safe on multi-display setups:
+        // the old staging rect (vf.minY - height) is only genuinely off-screen when
+        // nothing sits below the target display. With displays stacked vertically it
+        // lands on the neighbouring screen, so the bar appeared there in full and then
+        // flew across the bezel. A view clipped to the window can never escape it.
         isHiding = false
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0
-            panel.animator().setFrame(offScreen, display: false)
-        }
-        panel.setFrame(offScreen, display: false)
+        panel.setFrame(onScreen, display: false)
+        guard let content = panel.contentView else { isPresenting = false; return }
+        content.autoresizingMask = []
+        content.frame = NSRect(x: 0, y: -height, width: onScreen.width, height: height)
+
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
 
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.22
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            panel.animator().setFrame(onScreen, display: true)
+            content.animator().frame = NSRect(x: 0, y: 0, width: onScreen.width, height: height)
         }, completionHandler: { [weak self] in
             DispatchQueue.main.async { self?.isPresenting = false }
         })
     }
 
     func hide() {
-        guard let panel = window, panel.isVisible, !isHiding else { return }
+        guard let panel = window, panel.isVisible, !isHiding,
+              let content = panel.contentView else { return }
         isHiding = true
-        let off = NSRect(x: panel.frame.minX, y: panel.frame.minY - panel.frame.height,
-                         width: panel.frame.width, height: panel.frame.height)
+        let down = NSRect(x: 0, y: -content.frame.height,
+                          width: content.frame.width, height: content.frame.height)
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.16
             ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
-            panel.animator().setFrame(off, display: true)
+            content.animator().frame = down
         }, completionHandler: { [weak self] in
             DispatchQueue.main.async {
                 // show() may have re-staged the panel mid-animation; only retire it if
