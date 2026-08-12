@@ -18,9 +18,15 @@ final class ClipboardStore {
     private(set) var history: [ClipItem] = []
     private(set) var pinboards: [Pinboard] = []
 
-    var source: BarSource = .history
-    var searchText: String = ""
+    var source: BarSource = .history {
+        didSet { if source != oldValue { clearMultiSelection() } }
+    }
+    var searchText: String = "" {
+        didSet { if searchText != oldValue { clearMultiSelection() } }
+    }
     var selectedID: UUID?
+    private(set) var multiSelectedIDs: Set<UUID> = []
+    private var selectionAnchorID: UUID?
 
     /// Bumped every time the bar is about to present. The hosting view is
     /// built once and cached, so the strip keeps its scroll offset across
@@ -101,14 +107,18 @@ final class ClipboardStore {
             var existing = history.remove(at: idx)
             existing.createdAt = item.createdAt
             history.insert(existing, at: 0)
-            if source == .history && searchText.isEmpty { selectedID = existing.id }
+            if source == .history && searchText.isEmpty && multiSelectedIDs.isEmpty {
+                selectedID = existing.id
+                selectionAnchorID = existing.id
+            }
             scheduleSave()
             return
         }
         history.insert(item, at: 0)
         trimHistory()
-        if source == .history && searchText.isEmpty {
+        if source == .history && searchText.isEmpty && multiSelectedIDs.isEmpty {
             selectedID = item.id
+            selectionAnchorID = item.id
         }
         scheduleSave()
     }
@@ -162,6 +172,7 @@ final class ClipboardStore {
         for item in removed { deleteImageFile(item) }
         markRetentionPruned(removed)
         if let sel = selectedID, removed.contains(where: { $0.id == sel }) { selectFirst() }
+        reconcileMultiSelection()
     }
 
     private func markRetentionPruned(_ items: [ClipItem]) {
@@ -179,29 +190,38 @@ final class ClipboardStore {
     /// Deleting exactly what was removed also closes an image-file leak: the
     /// old cross-container removal deleted entries under two file names but
     /// cleaned up only one of them.
-    func delete(_ item: ClipItem) {
+    func delete(_ item: ClipItem) { delete(items: [item]) }
+
+    func delete(items: [ClipItem]) {
+        let ids = Set(items.map(\.id))
+        guard !ids.isEmpty else { return }
         // Captured before removal so repeated deletes walk down the list
         // instead of snapping back to the newest clip every time.
-        let deletedIndex = visibleItems.firstIndex(where: { $0.id == item.id })
+        let deletedIndex = visibleItems.firstIndex(where: { ids.contains($0.id) })
+        let selectionDeleted = selectedID.map { ids.contains($0) } ?? false
         let removed: [ClipItem]
         switch source {
         case .history:
-            removed = history.filter { $0.id == item.id }
-            history.removeAll { $0.id == item.id }
+            removed = history.filter { ids.contains($0.id) }
+            history.removeAll { ids.contains($0.id) }
         case .pinboard(let boardID):
             guard let boardIndex = pinboards.firstIndex(where: { $0.id == boardID }) else { return }
-            removed = pinboards[boardIndex].items.filter { $0.id == item.id }
-            pinboards[boardIndex].items.removeAll { $0.id == item.id }
+            removed = pinboards[boardIndex].items.filter { ids.contains($0.id) }
+            pinboards[boardIndex].items.removeAll { ids.contains($0.id) }
         }
         for entry in removed { deleteImageFile(entry) }
-        if selectedID == item.id {
-            let items = visibleItems
-            if let index = deletedIndex, !items.isEmpty {
-                selectedID = items[min(index, items.count - 1)].id
+        multiSelectedIDs.subtract(ids)
+        if multiSelectedIDs.count <= 1 { multiSelectedIDs = [] }
+        if selectionDeleted {
+            let remaining = visibleItems
+            if let index = deletedIndex, !remaining.isEmpty {
+                selectedID = remaining[min(index, remaining.count - 1)].id
             } else {
                 selectFirst()
             }
+            selectionAnchorID = selectedID
         }
+        reconcileMultiSelection()
         scheduleSave()
     }
 
@@ -210,6 +230,7 @@ final class ClipboardStore {
         history.removeAll()
         selectedID = nil
         for item in old { deleteImageFile(item) }
+        reconcileMultiSelection()
         scheduleSave()
     }
 
@@ -233,6 +254,7 @@ final class ClipboardStore {
         let removedItems = pinboards[i].items
         pinboards.remove(at: i)
         for item in removedItems { deleteImageFile(item) }
+        reconcileMultiSelection()
         scheduleSave()
     }
 
@@ -269,13 +291,83 @@ final class ClipboardStore {
 
     func selectFirst() { selectedID = visibleItems.first?.id }
 
+    var effectiveSelectionIDs: Set<UUID> {
+        if !multiSelectedIDs.isEmpty { return multiSelectedIDs }
+        return selectedID.map { [$0] } ?? []
+    }
+
+    func isSelected(_ id: UUID) -> Bool {
+        if multiSelectedIDs.isEmpty { return selectedID == id }
+        return multiSelectedIDs.contains(id)
+    }
+
+    func select(_ id: UUID) {
+        selectedID = id
+        selectionAnchorID = id
+        multiSelectedIDs = []
+    }
+
+    func toggleSelection(_ id: UUID) {
+        guard visibleItems.contains(where: { $0.id == id }) else { return }
+        if multiSelectedIDs.isEmpty, let sel = selectedID, sel != id,
+           visibleItems.contains(where: { $0.id == sel }) {
+            multiSelectedIDs = [sel]
+        }
+        if multiSelectedIDs.contains(id) {
+            multiSelectedIDs.remove(id)
+            if selectedID == id { selectedID = multiSelectedIDs.first ?? visibleItems.first?.id }
+            if selectionAnchorID == id { selectionAnchorID = selectedID }
+            if multiSelectedIDs.count <= 1 { multiSelectedIDs = [] }
+        } else {
+            multiSelectedIDs.insert(id)
+            selectedID = id
+            if selectionAnchorID == nil { selectionAnchorID = id }
+            if multiSelectedIDs.count == 1 { multiSelectedIDs = [] }
+        }
+    }
+
+    func extendSelection(to id: UUID) {
+        let items = visibleItems
+        guard let targetIndex = items.firstIndex(where: { $0.id == id }) else { return }
+        guard let anchor = selectionAnchorID ?? selectedID,
+              let anchorIndex = items.firstIndex(where: { $0.id == anchor }) else {
+            select(id)
+            return
+        }
+        let range = items[min(anchorIndex, targetIndex)...max(anchorIndex, targetIndex)]
+        multiSelectedIDs = Set(range.map(\.id))
+        selectedID = id
+        selectionAnchorID = anchor
+        if multiSelectedIDs.count <= 1 { multiSelectedIDs = [] }
+    }
+
+    func clearMultiSelection() {
+        multiSelectedIDs = []
+        selectionAnchorID = selectedID
+    }
+
+    private func reconcileMultiSelection() {
+        guard !multiSelectedIDs.isEmpty else { return }
+        let visible = Set(visibleItems.map(\.id))
+        multiSelectedIDs.formIntersection(visible)
+        if multiSelectedIDs.count <= 1 { multiSelectedIDs = [] }
+        if let anchor = selectionAnchorID, !visible.contains(anchor) {
+            selectionAnchorID = selectedID
+        }
+        if let sel = selectedID, !visible.contains(sel) {
+            selectedID = multiSelectedIDs.first ?? visibleItems.first?.id
+        }
+    }
+
     func prepareForBarPresentation() {
         applyRetentionPolicy()
+        clearMultiSelection()
         barPresentationToken &+= 1
         selectFirst()
     }
 
     func moveSelection(by delta: Int) {
+        clearMultiSelection()
         let items = visibleItems
         guard !items.isEmpty else { return }
         guard let id = selectedID, let idx = items.firstIndex(where: { $0.id == id }) else {
@@ -283,6 +375,7 @@ final class ClipboardStore {
         }
         let next = max(0, min(items.count - 1, idx + delta))
         selectedID = items[next].id
+        selectionAnchorID = selectedID
     }
 
     func imageURL(for item: ClipItem) -> URL? {
@@ -382,6 +475,7 @@ final class ClipboardStore {
         }
         trimHistory()
         if selectedID == nil { selectFirst() }
+        reconcileMultiSelection()
         scheduleSave()
     }
 
@@ -402,6 +496,7 @@ final class ClipboardStore {
             deleteImageFile(item)
         }
         if let sel = selectedID, set.contains(sel) { selectFirst() }
+        reconcileMultiSelection()
         scheduleSave()
     }
 

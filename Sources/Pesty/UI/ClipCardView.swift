@@ -40,7 +40,9 @@ struct ClipCardView: View {
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
         .onTapGesture(count: 2) { AppController.shared.pasteItem(item) }
-        .onTapGesture { store.selectedID = item.id }
+        .onTapGesture { store.select(item.id) }
+        .highPriorityGesture(TapGesture().modifiers(.shift).onEnded { store.extendSelection(to: item.id) })
+        .highPriorityGesture(TapGesture().modifiers(.command).onEnded { store.toggleSelection(item.id) })
         .onDrag { ClipDragProvider.make(for: item) }
         .contextMenu { menu }
     }
@@ -213,6 +215,13 @@ struct ClipCardView: View {
             }
         }
         Divider()
-        Button("Delete", role: .destructive) { store.delete(item) }
+        Button(deleteMenuTitle, role: .destructive) {
+            AppController.shared.deleteSelection(containing: item)
+        }
+    }
+
+    private var deleteMenuTitle: String {
+        let count = store.multiSelectedIDs.contains(item.id) ? store.multiSelectedIDs.count : 1
+        return count > 1 ? "Delete \(count) Clips" : "Delete"
     }
 }

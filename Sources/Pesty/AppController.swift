@@ -277,6 +277,38 @@ final class AppController: NSObject, NSApplicationDelegate {
         hideBar()
     }
 
+    func deleteEffectiveSelection() {
+        let selection = store.effectiveSelectionIDs
+        let targets = store.visibleItems.filter { selection.contains($0.id) }
+        guard !targets.isEmpty else { return }
+        if targets.count == 1 {
+            store.delete(targets[0])
+            return
+        }
+        suppressAutoHide = true
+        defer { suppressAutoHide = false }
+        let alert = NSAlert()
+        alert.messageText = "Delete \(targets.count) Clips?"
+        #if MAS
+        alert.informativeText = "There is no undo. When iCloud sync is on, these clips are also removed from your other devices."
+        #else
+        alert.informativeText = "There is no undo."
+        #endif
+        let confirm = alert.addButton(withTitle: "Delete \(targets.count) Clips")
+        confirm.hasDestructiveAction = true
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        store.delete(items: targets)
+    }
+
+    func deleteSelection(containing item: ClipItem) {
+        if store.multiSelectedIDs.contains(item.id) {
+            deleteEffectiveSelection()
+        } else {
+            store.delete(item)
+        }
+    }
+
     func showSettings() {
         NSApp.activate(ignoringOtherApps: true)
         if let win = settingsWindow {
@@ -355,7 +387,9 @@ final class AppController: NSObject, NSApplicationDelegate {
 
         switch code {
         case kVK_Escape:
-            if !store.searchText.isEmpty {
+            if !store.multiSelectedIDs.isEmpty {
+                store.clearMultiSelection()
+            } else if !store.searchText.isEmpty {
                 store.searchText = ""; store.selectFirst()
                 searchClearedAt = Date()
             } else { hideBar() }
@@ -367,7 +401,7 @@ final class AppController: NSObject, NSApplicationDelegate {
         case kVK_RightArrow, kVK_DownArrow:
             store.moveSelection(by: 1); return nil
         case kVK_Delete:
-            if cmd, let sel = store.selectedItem { store.delete(sel); return nil }
+            if cmd { deleteEffectiveSelection(); return nil }
             if !store.searchText.isEmpty {
                 store.searchText.removeLast(); store.selectFirst()
                 if store.searchText.isEmpty { searchClearedAt = Date() }
@@ -381,13 +415,12 @@ final class AppController: NSObject, NSApplicationDelegate {
             // "delete a clip". There is no undo, and deletions replicate to
             // other devices when sync is on.
             if !event.isARepeat,
-               Date().timeIntervalSince(searchClearedAt) > Self.deleteAfterSearchClearCooldown,
-               let sel = store.selectedItem {
-                store.delete(sel)
+               Date().timeIntervalSince(searchClearedAt) > Self.deleteAfterSearchClearCooldown {
+                deleteEffectiveSelection()
             }
             return nil
         case kVK_ForwardDelete:
-            if let sel = store.selectedItem { store.delete(sel) }
+            deleteEffectiveSelection()
             return nil
         default:
             break

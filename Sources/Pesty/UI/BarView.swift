@@ -42,6 +42,9 @@ struct BarView: View {
             PinboardTabs()
                 .layoutPriority(1)
             Spacer(minLength: 8)
+            if store.multiSelectedIDs.count > 1 {
+                bulkDeleteButton
+            }
             moreMenu
         }
         .padding(.horizontal, 18)
@@ -86,6 +89,21 @@ struct BarView: View {
         .animation(.easeOut(duration: 0.15), value: store.searchText.isEmpty)
     }
 
+    private var bulkDeleteButton: some View {
+        let count = store.multiSelectedIDs.count
+        return Button(role: .destructive) {
+            AppController.shared.deleteEffectiveSelection()
+        } label: {
+            Label("Delete \(count)", systemImage: "trash")
+                .font(.system(size: 12.5, weight: .medium))
+                .lineLimit(1)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .help("Delete \(count) selected clips (⌘⌫)")
+        .accessibilityLabel("Delete \(count) selected clips")
+    }
+
     private var moreMenu: some View {
         Menu {
             Button("Settings…") { AppController.shared.showSettings() }
@@ -117,7 +135,7 @@ struct BarView: View {
                     ForEach(Array(store.visibleItems.enumerated()), id: \.element.id) { index, item in
                         ClipCardView(item: item,
                                      index: index,
-                                     selected: item.id == store.selectedID)
+                                     selected: store.isSelected(item.id))
                             .id(item.id)
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.92).combined(with: .opacity),
