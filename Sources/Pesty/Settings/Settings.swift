@@ -90,9 +90,6 @@ final class Settings {
             d.set(hotkeyModifiers, forKey: Keys.hotkeyModifiers); HotKeyCenter.shared.reload() }
     }
 
-    /// The two roles must never share a modifier - if they did, every quick
-    /// paste would silently take the plain-text branch. Choosing a modifier
-    /// that the other role holds swaps them instead.
     var quickPasteModifier: Int {
         didSet {
             guard isLoaded else { return }

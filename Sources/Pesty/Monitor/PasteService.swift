@@ -8,8 +8,6 @@ enum PasteService {
     static func copy(_ item: ClipItem,
                      asPlainText: Bool = false,
                      to pasteboard: NSPasteboard = .general) -> Int {
-        // Clips with no plain representation (images) fall through to the
-        // rich copy rather than silently writing nothing.
         if asPlainText, let text = item.plainText {
             pasteboard.clearContents()
             pasteboard.setString(text, forType: .string)

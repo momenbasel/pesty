@@ -342,9 +342,6 @@ final class AppController: NSObject, NSApplicationDelegate {
         let ctrl = flags.contains(.control)
         let opt = flags.contains(.option)
 
-        // Quick paste matches on key codes, not characters: Shift changes what
-        // `charactersIgnoringModifiers` reports ("!" for Shift-1), and key
-        // codes are also stable across keyboard layouts.
         if let digit = Self.quickPasteDigit(for: code),
            includes(Settings.shared.quickPasteModifier, in: flags) {
             let items = store.visibleItems
