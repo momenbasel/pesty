@@ -41,6 +41,7 @@ struct ClipCardView: View {
         .onHover { hovering = $0 }
         .onTapGesture(count: 2) { AppController.shared.pasteItem(item) }
         .onTapGesture { store.selectedID = item.id }
+        .onDrag { ClipDragProvider.make(for: item) }
         .contextMenu { menu }
     }
 
