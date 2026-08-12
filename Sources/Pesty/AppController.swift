@@ -206,8 +206,9 @@ final class AppController: NSObject, NSApplicationDelegate {
 
     func showBar() {
         let front = NSWorkspace.shared.frontmostApplication
-        if front?.bundleIdentifier != Bundle.main.bundleIdentifier {
+        if let front, !isPesty(front) {
             previousApp = front
+            lastActiveApp = front
         }
         store.searchText = ""
         store.source = .history
@@ -229,13 +230,28 @@ final class AppController: NSObject, NSApplicationDelegate {
 
     func pasteSelected() {
         guard let item = store.selectedItem else { return }
-        hideBar()
-        PasteService.paste(item, into: previousApp, monitor: monitor)
+        pasteItem(item)
+    }
+
+    /// The app that will receive a paste after the floating Pesty panel closes.
+    /// `previousApp` is captured before the panel activates, while
+    /// `lastActiveApp` covers menu-bar and reopen paths where it is unavailable.
+    private var pasteTarget: NSRunningApplication? {
+        [lastActiveApp, previousApp, NSWorkspace.shared.frontmostApplication]
+            .compactMap { $0 }
+            .first { !$0.isTerminated && !isPesty($0) }
+    }
+
+    private func isPesty(_ app: NSRunningApplication) -> Bool {
+        if app.processIdentifier == ProcessInfo.processInfo.processIdentifier { return true }
+        guard let bundleID = Bundle.main.bundleIdentifier else { return false }
+        return app.bundleIdentifier == bundleID
     }
 
     func pasteItem(_ item: ClipItem) {
+        let target = pasteTarget
         hideBar()
-        PasteService.paste(item, into: previousApp, monitor: monitor)
+        PasteService.paste(item, into: target, monitor: monitor)
     }
 
     func copyItem(_ item: ClipItem) {
@@ -296,6 +312,11 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     private func handleKey(_ event: NSEvent) -> NSEvent? {
+        // Events belonging to a native context menu, editor, alert, or the
+        // Settings window must stay with their own responder chain. The bar
+        // monitor is only responsible for keys delivered to the panel itself.
+        guard event.window === barController?.window else { return event }
+
         if handleBarCommandShortcut(event) { return nil }
 
         let code = Int(event.keyCode)
