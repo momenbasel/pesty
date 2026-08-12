@@ -20,6 +20,12 @@ final class AppController: NSObject, NSApplicationDelegate {
 
     var suppressAutoHide = false
 
+    /// When the search query last became empty via the keyboard. A bare
+    /// Backspace deletes the selected clip, and the keystroke that clears the
+    /// query must stay unambiguously separate from the keystroke that deletes.
+    private var searchClearedAt: Date = .distantPast
+    private static let deleteAfterSearchClearCooldown: TimeInterval = 0.6
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
@@ -344,8 +350,10 @@ final class AppController: NSObject, NSApplicationDelegate {
 
         switch code {
         case kVK_Escape:
-            if !store.searchText.isEmpty { store.searchText = ""; store.selectFirst() }
-            else { hideBar() }
+            if !store.searchText.isEmpty {
+                store.searchText = ""; store.selectFirst()
+                searchClearedAt = Date()
+            } else { hideBar() }
             return nil
         case kVK_Return, kVK_ANSI_KeypadEnter:
             pasteSelected(); return nil
@@ -356,7 +364,21 @@ final class AppController: NSObject, NSApplicationDelegate {
         case kVK_Delete:
             if cmd, let sel = store.selectedItem { store.delete(sel); return nil }
             if !store.searchText.isEmpty {
-                store.searchText.removeLast(); store.selectFirst(); return nil
+                store.searchText.removeLast(); store.selectFirst()
+                if store.searchText.isEmpty { searchClearedAt = Date() }
+                return nil
+            }
+            // A bare Backspace deletes the selected clip, but only as a
+            // deliberate, separate keypress. Auto-repeat is ignored - a held
+            // Backspace that just finished clearing a query must not start
+            // deleting clips at the key-repeat rate - and a short cooldown
+            // after the search empties separates "clear the query" from
+            // "delete a clip". There is no undo, and deletions replicate to
+            // other devices when sync is on.
+            if !event.isARepeat,
+               Date().timeIntervalSince(searchClearedAt) > Self.deleteAfterSearchClearCooldown,
+               let sel = store.selectedItem {
+                store.delete(sel)
             }
             return nil
         case kVK_ForwardDelete:

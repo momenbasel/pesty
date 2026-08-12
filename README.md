@@ -39,7 +39,7 @@ It is a faithful, native reimplementation of the Paste experience - built in **S
 - **Pinboards** - save clips you reuse into named, color-tagged collections that never expire.
 - **iCloud sync** - optionally keep your history and pinboards in sync across your Macs via iCloud Drive.
 - **Instant search** - start typing to filter your whole history.
-- **Keyboard-first** - arrow keys to move, `return` to paste, `⌘1`–`⌘9` to quick-paste, `⌘⌫` to delete, `esc` to close.
+- **Keyboard-first** - arrow keys to move, `return` to paste, `⌘1`–`⌘9` to quick-paste, `⌫` or `⌘⌫` to delete, `esc` to close.
 - **Paste directly** - drops the clip into the app you were using, no manual `⌘V` needed.
 - **Privacy-aware** - ignores clips marked concealed by password managers; history stored with `0600` permissions.
 - **Menu-bar app** - runs quietly as a menu-bar item, optional launch at login.
@@ -78,7 +78,7 @@ The build is signed with a Developer ID and notarized by Apple, so it opens with
 | `←` `→` `↑` `↓` | Move selection |
 | `return` | Paste selected clip |
 | `⌘1`–`⌘9` | Quick-paste the Nth clip |
-| `⌘⌫` | Delete selected clip |
+| `⌫` (search empty) or `⌘⌫` | Delete selected clip |
 | type anything | Search |
 | `esc` | Clear search, then close |
 

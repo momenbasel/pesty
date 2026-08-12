@@ -130,6 +130,9 @@ final class ClipboardStore {
     /// old cross-container removal deleted entries under two file names but
     /// cleaned up only one of them.
     func delete(_ item: ClipItem) {
+        // Captured before removal so repeated deletes walk down the list
+        // instead of snapping back to the newest clip every time.
+        let deletedIndex = visibleItems.firstIndex(where: { $0.id == item.id })
         let removed: [ClipItem]
         switch source {
         case .history:
@@ -141,7 +144,14 @@ final class ClipboardStore {
             pinboards[boardIndex].items.removeAll { $0.id == item.id }
         }
         for entry in removed { deleteImageFile(entry) }
-        if selectedID == item.id { selectFirst() }
+        if selectedID == item.id {
+            let items = visibleItems
+            if let index = deletedIndex, !items.isEmpty {
+                selectedID = items[min(index, items.count - 1)].id
+            } else {
+                selectFirst()
+            }
+        }
         scheduleSave()
     }
 
