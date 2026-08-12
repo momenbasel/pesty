@@ -70,15 +70,18 @@ struct BarView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Theme.chromeTextPrimary)
                     .lineLimit(1)
+                    .truncationMode(.head)
                 Button { store.searchText = ""; store.selectFirst() } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 12)).foregroundStyle(Theme.chromeTextTertiary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
             }
         }
         .padding(.horizontal, store.searchText.isEmpty ? 0 : 10)
-        .frame(height: 30)
+        .frame(minWidth: 22, maxWidth: 700, minHeight: 30, maxHeight: 30, alignment: .leading)
+        .fixedSize(horizontal: true, vertical: false)
         .background(store.searchText.isEmpty ? Color.clear : Theme.fieldBG, in: Capsule())
         .animation(.easeOut(duration: 0.15), value: store.searchText.isEmpty)
     }
