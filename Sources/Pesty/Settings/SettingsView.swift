@@ -108,10 +108,9 @@ private struct GeneralSettings: View {
         Form {
             Section("Activation") {
                 LabeledContent("Show Pesty") { HotkeyRecorderView() }
-                Stepper(value: $settings.historyLimit, in: 50...5000, step: 50) {
-                    LabeledContent("History limit", value: "\(settings.historyLimit) items")
-                }
             }
+
+            HistoryRetentionSettings()
 
             Section("Quick Paste") {
                 LabeledContent("Paste items 1–9") {
@@ -233,6 +232,86 @@ private struct GeneralSettings: View {
         .labelsHidden()
         .pickerStyle(.menu)
         .frame(minWidth: 118)
+    }
+}
+
+private struct HistoryRetentionSettings: View {
+    private var settings = Settings.shared
+    @State private var draftMode = Settings.shared.historyRetentionMode
+    @State private var draftLimit = Settings.shared.historyLimit
+    @State private var draftDays = Settings.shared.historyRetentionDays
+    @State private var pendingRemovalCount = 0
+    @State private var confirmingChange = false
+
+    private static let dayChoices: [(days: Int, label: String)] = [
+        (1, "1 Day"), (7, "1 Week"), (14, "2 Weeks"), (30, "1 Month"),
+        (90, "3 Months"), (180, "6 Months"), (365, "1 Year")
+    ]
+
+    var body: some View {
+        Section("History") {
+            Picker("Limit history by", selection: $draftMode) {
+                ForEach(HistoryRetentionMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            if draftMode == .itemCount {
+                Stepper(value: $draftLimit, in: 50...5000, step: 50) {
+                    LabeledContent("Keep at most", value: "\(draftLimit) clips")
+                }
+            } else {
+                Picker("Remove clips older than", selection: $draftDays) {
+                    ForEach(Self.dayChoices, id: \.days) { choice in
+                        Text(choice.label).tag(choice.days)
+                    }
+                }
+            }
+            Text(footnote)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .onChange(of: draftMode) { evaluateDraft() }
+        .onChange(of: draftLimit) { evaluateDraft() }
+        .onChange(of: draftDays) { evaluateDraft() }
+        .alert("Remove \(pendingRemovalCount) Clips?", isPresented: $confirmingChange) {
+            Button("Remove \(pendingRemovalCount) Clips", role: .destructive) { commit() }
+            Button("Cancel", role: .cancel) { revert() }
+        } message: {
+            Text("This setting removes \(pendingRemovalCount) clips from history on this Mac now, and keeps pruning automatically. Pinboards are not affected, and there is no undo.")
+        }
+    }
+
+    private var footnote: String {
+        #if MAS
+        "Pruning tidies this Mac only — synced copies stay on your other devices. Pinned clips are never removed."
+        #else
+        "Pruning applies to this Mac's history. Pinned clips are never removed."
+        #endif
+    }
+
+    private func evaluateDraft() {
+        let count = ClipboardStore.shared.retentionRemovalCount(
+            mode: draftMode, limit: draftLimit, days: draftDays)
+        if count > 0 {
+            pendingRemovalCount = count
+            confirmingChange = true
+        } else {
+            commit()
+        }
+    }
+
+    private func commit() {
+        settings.historyRetentionMode = draftMode
+        settings.historyLimit = draftLimit
+        settings.historyRetentionDays = draftDays
+        ClipboardStore.shared.applyRetentionPolicy()
+    }
+
+    private func revert() {
+        draftMode = settings.historyRetentionMode
+        draftLimit = settings.historyLimit
+        draftDays = settings.historyRetentionDays
     }
 }
 

@@ -113,13 +113,63 @@ final class ClipboardStore {
         scheduleSave()
     }
 
-    func applyHistoryLimit() { trimHistory(); scheduleSave() }
+    func applyRetentionPolicy() { trimHistory(); scheduleSave() }
+
+    func retentionRemovalCount(mode: HistoryRetentionMode, limit: Int, days: Int) -> Int {
+        switch mode {
+        case .itemCount:
+            return max(0, history.count - max(20, limit))
+        case .timeInterval:
+            let cutoff = Self.retentionCutoff(daysAgo: days)
+            let byAge = history.filter { $0.createdAt < cutoff }.count
+            return byAge + max(0, (history.count - byAge) - Self.timeRetentionSafetyCap)
+        }
+    }
+
+    private static let timeRetentionSafetyCap = 5000
+
+    private static func retentionCutoff(daysAgo days: Int) -> Date {
+        Date().addingTimeInterval(-TimeInterval(max(1, days)) * 86_400)
+    }
+
+    private(set) var retentionPrunedRecordNames: Set<String> = []
+
+    func isRetentionPruned(_ recordName: String) -> Bool {
+        retentionPrunedRecordNames.contains(recordName)
+    }
 
     private func trimHistory() {
-        guard history.count > historyLimit else { return }
-        let removed = Array(history[historyLimit...])
-        history.removeLast(history.count - historyLimit)
+        var removed: [ClipItem] = []
+        switch Settings.shared.historyRetentionMode {
+        case .itemCount:
+            if history.count > historyLimit {
+                removed = Array(history[historyLimit...])
+                history.removeLast(history.count - historyLimit)
+            }
+        case .timeInterval:
+            let cutoff = Self.retentionCutoff(daysAgo: Settings.shared.historyRetentionDays)
+            let old = history.filter { $0.createdAt < cutoff }
+            if !old.isEmpty {
+                removed += old
+                history.removeAll { $0.createdAt < cutoff }
+            }
+            if history.count > Self.timeRetentionSafetyCap {
+                removed += Array(history[Self.timeRetentionSafetyCap...])
+                history.removeLast(history.count - Self.timeRetentionSafetyCap)
+            }
+        }
+        guard !removed.isEmpty else { return }
         for item in removed { deleteImageFile(item) }
+        markRetentionPruned(removed)
+        if let sel = selectedID, removed.contains(where: { $0.id == sel }) { selectFirst() }
+    }
+
+    private func markRetentionPruned(_ items: [ClipItem]) {
+        let names = items.map { $0.id.uuidString }
+        retentionPrunedRecordNames.formUnion(names)
+        #if MAS
+        CloudSyncService.shared.retainRemoteRecords(named: names)
+        #endif
     }
 
     /// Deletes a clip from the collection currently on screen only. A Pinboard
@@ -220,6 +270,7 @@ final class ClipboardStore {
     func selectFirst() { selectedID = visibleItems.first?.id }
 
     func prepareForBarPresentation() {
+        applyRetentionPolicy()
         barPresentationToken &+= 1
         selectFirst()
     }
@@ -383,6 +434,7 @@ final class ClipboardStore {
             deleteImageFile(dup)
         }
         insertSortedByDate(item, into: &history)
+        retentionPrunedRecordNames.remove(item.id.uuidString)
         // Same-id replace: drop the old image file unless something still uses it.
         for old in replaced { deleteImageFile(old) }
     }
@@ -410,6 +462,7 @@ final class ClipboardStore {
             deleteImageFile(dup)
         }
         insertSortedByDate(item, into: &pinboards[i].items)
+        retentionPrunedRecordNames.remove(item.id.uuidString)
         // Same-id replace: drop the old image file unless something still uses it.
         for old in replaced { deleteImageFile(old) }
     }
@@ -467,7 +520,8 @@ final class ClipboardStore {
         var seen = Set<String>()
         var merged: [ClipItem] = []
         for it in combined where seen.insert(contentKey(it)).inserted { merged.append(it) }
-        history = Array(merged.prefix(historyLimit))
+        history = merged
+        trimHistory()
 
         var byID: [UUID: Pinboard] = Dictionary(uniqueKeysWithValues: pinboards.map { ($0.id, $0) })
         for b in snap.pinboards {

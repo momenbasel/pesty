@@ -121,6 +121,14 @@ final class CloudSyncService {
         let isPinboard: Bool
     }
 
+    func retainRemoteRecords(named names: [String]) {
+        guard !names.isEmpty else { return }
+        if engine == nil { shadow = loadShadow() }
+        var changed = false
+        for name in names where shadow.removeValue(forKey: name) != nil { changed = true }
+        if changed { saveShadow() }
+    }
+
     private func diffAndEnqueue() {
         guard let engine, !isApplyingRemote else { return }
         let desired = desiredRecords()
@@ -130,6 +138,10 @@ final class CloudSyncService {
             shadow[name] = rec.fingerprint
         }
         for name in Array(shadow.keys) where desired[name] == nil {
+            if store.isRetentionPruned(name) {
+                shadow.removeValue(forKey: name)
+                continue
+            }
             pending.append(.deleteRecord(recordID(name)))
             shadow.removeValue(forKey: name)
             removeSystemFields(name)
@@ -228,6 +240,8 @@ final class CloudSyncService {
             let name = id.uuidString
             if let rec = desired[name] {
                 shadow[name] = rec.fingerprint
+            } else if store.isRetentionPruned(name) {
+                shadow.removeValue(forKey: name)
             } else {
                 shadow.removeValue(forKey: name)
                 removeSystemFields(name)

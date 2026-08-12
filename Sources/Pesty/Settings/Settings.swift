@@ -45,6 +45,20 @@ enum ShortcutModifier: CaseIterable, Identifiable {
     }
 }
 
+enum HistoryRetentionMode: String, CaseIterable, Identifiable {
+    case itemCount
+    case timeInterval
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .itemCount: return "Number of clips"
+        case .timeInterval: return "Age of clips"
+        }
+    }
+}
+
 @Observable
 @MainActor
 final class Settings {
@@ -55,6 +69,8 @@ final class Settings {
 
     enum Keys {
         static let historyLimit = "historyLimit"
+        static let historyRetentionMode = "historyRetentionMode"
+        static let historyRetentionDays = "historyRetentionDays"
         static let hotkeyKeyCode = "hotkeyKeyCode"
         static let hotkeyModifiers = "hotkeyModifiers"
         static let quickPasteModifier = "quickPasteModifier"
@@ -77,7 +93,21 @@ final class Settings {
             guard isLoaded else { return }
             if historyLimit < 20 { historyLimit = 20; return }
             d.set(historyLimit, forKey: Keys.historyLimit)
-            ClipboardStore.shared.applyHistoryLimit()
+        }
+    }
+
+    var historyRetentionMode: HistoryRetentionMode {
+        didSet {
+            guard isLoaded else { return }
+            d.set(historyRetentionMode.rawValue, forKey: Keys.historyRetentionMode)
+        }
+    }
+
+    var historyRetentionDays: Int {
+        didSet {
+            guard isLoaded else { return }
+            if historyRetentionDays < 1 { historyRetentionDays = 1; return }
+            d.set(historyRetentionDays, forKey: Keys.historyRetentionDays)
         }
     }
 
@@ -167,6 +197,8 @@ final class Settings {
     private init() {
         d.register(defaults: [
             Keys.historyLimit: 500,
+            Keys.historyRetentionMode: HistoryRetentionMode.itemCount.rawValue,
+            Keys.historyRetentionDays: 30,
             Keys.hotkeyKeyCode: kVK_ANSI_V,
             Keys.hotkeyModifiers: cmdKey | shiftKey,
             Keys.quickPasteModifier: cmdKey,
@@ -184,6 +216,9 @@ final class Settings {
             Keys.cloudKitSync: true
         ])
         historyLimit = d.integer(forKey: Keys.historyLimit)
+        historyRetentionMode = HistoryRetentionMode(rawValue: d.string(forKey: Keys.historyRetentionMode) ?? "")
+            ?? .itemCount
+        historyRetentionDays = max(1, d.integer(forKey: Keys.historyRetentionDays))
         hotkeyKeyCode = d.integer(forKey: Keys.hotkeyKeyCode)
         hotkeyModifiers = d.integer(forKey: Keys.hotkeyModifiers)
         quickPasteModifier = d.integer(forKey: Keys.quickPasteModifier)
