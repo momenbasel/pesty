@@ -113,6 +113,21 @@ private struct GeneralSettings: View {
                 }
             }
 
+            Section("Quick Paste") {
+                LabeledContent("Paste items 1–9") {
+                    HStack(spacing: 6) {
+                        modifierPicker(selection: $settings.quickPasteModifier)
+                        Text("+ 1…9").foregroundStyle(.secondary)
+                    }
+                }
+                LabeledContent("Paste as plain text") {
+                    modifierPicker(selection: $settings.plainTextModifier)
+                }
+                Text("Hold the plain-text modifier while using Quick Paste to strip formatting — with the defaults, ⌘⇧1 pastes the first clip as plain text. The two roles can never share a modifier; picking one that is taken swaps them.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Behavior") {
                 #if !MAS
                 Toggle("Paste directly into the active app", isOn: $settings.pasteDirectly)
@@ -207,6 +222,17 @@ private struct GeneralSettings: View {
         }
     }
     #endif
+
+    private func modifierPicker(selection: Binding<Int>) -> some View {
+        Picker("", selection: selection) {
+            ForEach(ShortcutModifier.allCases) { modifier in
+                Text("\(modifier.symbol) \(modifier.title)").tag(modifier.carbonValue)
+            }
+        }
+        .labelsHidden()
+        .pickerStyle(.menu)
+        .frame(minWidth: 118)
+    }
 }
 
 private struct AboutView: View {

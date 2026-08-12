@@ -265,10 +265,10 @@ final class AppController: NSObject, NSApplicationDelegate {
         return app.bundleIdentifier == bundleID
     }
 
-    func pasteItem(_ item: ClipItem) {
+    func pasteItem(_ item: ClipItem, asPlainText: Bool = false) {
         let target = pasteTarget
         hideBar()
-        PasteService.paste(item, into: target, monitor: monitor)
+        PasteService.paste(item, into: target, monitor: monitor, asPlainText: asPlainText)
     }
 
     func copyItem(_ item: ClipItem) {
@@ -342,9 +342,17 @@ final class AppController: NSObject, NSApplicationDelegate {
         let ctrl = flags.contains(.control)
         let opt = flags.contains(.option)
 
-        if cmd, let chars = event.charactersIgnoringModifiers, let n = Int(chars), (1...9).contains(n) {
+        // Quick paste matches on key codes, not characters: Shift changes what
+        // `charactersIgnoringModifiers` reports ("!" for Shift-1), and key
+        // codes are also stable across keyboard layouts.
+        if let digit = Self.quickPasteDigit(for: code),
+           includes(Settings.shared.quickPasteModifier, in: flags) {
             let items = store.visibleItems
-            if n <= items.count { pasteItem(items[n - 1]) }
+            if digit <= items.count {
+                let plain = includes(Settings.shared.plainTextModifier, in: flags)
+                    && Settings.shared.plainTextModifier != Settings.shared.quickPasteModifier
+                pasteItem(items[digit - 1], asPlainText: plain)
+            }
             return nil
         }
 
@@ -397,6 +405,31 @@ final class AppController: NSObject, NSApplicationDelegate {
             return nil
         }
         return event
+    }
+
+    private static func quickPasteDigit(for keyCode: Int) -> Int? {
+        switch keyCode {
+        case kVK_ANSI_1, kVK_ANSI_Keypad1: return 1
+        case kVK_ANSI_2, kVK_ANSI_Keypad2: return 2
+        case kVK_ANSI_3, kVK_ANSI_Keypad3: return 3
+        case kVK_ANSI_4, kVK_ANSI_Keypad4: return 4
+        case kVK_ANSI_5, kVK_ANSI_Keypad5: return 5
+        case kVK_ANSI_6, kVK_ANSI_Keypad6: return 6
+        case kVK_ANSI_7, kVK_ANSI_Keypad7: return 7
+        case kVK_ANSI_8, kVK_ANSI_Keypad8: return 8
+        case kVK_ANSI_9, kVK_ANSI_Keypad9: return 9
+        default: return nil
+        }
+    }
+
+    private func includes(_ carbonModifier: Int, in flags: NSEvent.ModifierFlags) -> Bool {
+        switch carbonModifier {
+        case cmdKey: return flags.contains(.command)
+        case optionKey: return flags.contains(.option)
+        case controlKey: return flags.contains(.control)
+        case shiftKey: return flags.contains(.shift)
+        default: return false
+        }
     }
 }
 

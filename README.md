@@ -77,7 +77,7 @@ The build is signed with a Developer ID and notarized by Apple, so it opens with
 | `⌘⇧P` (with strip open) | Pause / resume clipboard monitoring |
 | `←` `→` `↑` `↓` | Move selection |
 | `return` | Paste selected clip |
-| `⌘1`–`⌘9` | Quick-paste the Nth clip |
+| `⌘1`–`⌘9` (configurable) | Quick-paste the Nth clip; add the plain-text modifier (default `⇧`) to paste unformatted |
 | `⌫` (search empty) or `⌘⌫` | Delete selected clip |
 | type anything | Search |
 | `esc` | Clear search, then close |

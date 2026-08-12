@@ -7,6 +7,7 @@ struct ClipCardView: View {
 
     @State private var hovering = false
     private var store: ClipboardStore { ClipboardStore.shared }
+    private var settings: Settings { Settings.shared }
     private var headerColor: Color { SourceColor.color(for: item.sourceBundleID) }
 
     var body: some View {
@@ -158,8 +159,8 @@ struct ClipCardView: View {
                 Spacer(minLength: 4)
                 if index < 9 {
                     HStack(spacing: 3) {
-                        Image(systemName: "line.3.horizontal")
-                            .font(.system(size: 9, weight: .semibold))
+                        Text(settings.quickPasteModifierDisplay)
+                            .font(.system(size: 11, weight: .semibold))
                         Text("\(index + 1)")
                             .font(.system(size: 11, weight: .semibold))
                     }

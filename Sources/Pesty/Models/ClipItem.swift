@@ -44,6 +44,24 @@ struct ClipItem: Identifiable, Codable, Equatable {
 
     var charCount: Int { text?.count ?? 0 }
 
+    /// The representation used when a clip is explicitly pasted as plain text.
+    /// Images intentionally have none: converting an image to an arbitrary
+    /// description would be surprising and lossy. File clips paste full paths
+    /// rather than the bare display names stored in `text`.
+    var plainText: String? {
+        switch type {
+        case .image:
+            return nil
+        case .color:
+            return colorHex
+        case .file:
+            let paths = fileURLs.map { URL(string: $0)?.path ?? $0 }
+            return paths.isEmpty ? nil : paths.joined(separator: "\n")
+        case .text, .richText, .link:
+            return text
+        }
+    }
+
     var displayTitle: String {
         if let t = customTitle, !t.isEmpty { return t }
         switch type {

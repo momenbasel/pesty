@@ -2,6 +2,49 @@ import AppKit
 import Carbon.HIToolbox
 import Observation
 
+enum ShortcutModifier: CaseIterable, Identifiable {
+    case command
+    case option
+    case control
+    case shift
+
+    var id: Int { carbonValue }
+
+    var carbonValue: Int {
+        switch self {
+        case .command: return cmdKey
+        case .option: return optionKey
+        case .control: return controlKey
+        case .shift: return shiftKey
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .command: return "Command"
+        case .option: return "Option"
+        case .control: return "Control"
+        case .shift: return "Shift"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .command: return "⌘"
+        case .option: return "⌥"
+        case .control: return "⌃"
+        case .shift: return "⇧"
+        }
+    }
+
+    init?(carbonValue: Int) {
+        guard let modifier = Self.allCases.first(where: { $0.carbonValue == carbonValue }) else {
+            return nil
+        }
+        self = modifier
+    }
+}
+
 @Observable
 @MainActor
 final class Settings {
@@ -14,6 +57,8 @@ final class Settings {
         static let historyLimit = "historyLimit"
         static let hotkeyKeyCode = "hotkeyKeyCode"
         static let hotkeyModifiers = "hotkeyModifiers"
+        static let quickPasteModifier = "quickPasteModifier"
+        static let plainTextModifier = "plainTextModifier"
         static let launchAtLogin = "launchAtLogin"
         static let pasteDirectly = "pasteDirectly"
         static let playSound = "playSound"
@@ -43,6 +88,25 @@ final class Settings {
     var hotkeyModifiers: Int {
         didSet { guard isLoaded else { return }
             d.set(hotkeyModifiers, forKey: Keys.hotkeyModifiers); HotKeyCenter.shared.reload() }
+    }
+
+    /// The two roles must never share a modifier - if they did, every quick
+    /// paste would silently take the plain-text branch. Choosing a modifier
+    /// that the other role holds swaps them instead.
+    var quickPasteModifier: Int {
+        didSet {
+            guard isLoaded else { return }
+            if quickPasteModifier == plainTextModifier { plainTextModifier = oldValue }
+            d.set(quickPasteModifier, forKey: Keys.quickPasteModifier)
+        }
+    }
+
+    var plainTextModifier: Int {
+        didSet {
+            guard isLoaded else { return }
+            if plainTextModifier == quickPasteModifier { quickPasteModifier = oldValue }
+            d.set(plainTextModifier, forKey: Keys.plainTextModifier)
+        }
     }
 
     var launchAtLogin: Bool {
@@ -103,6 +167,8 @@ final class Settings {
             Keys.historyLimit: 500,
             Keys.hotkeyKeyCode: kVK_ANSI_V,
             Keys.hotkeyModifiers: cmdKey | shiftKey,
+            Keys.quickPasteModifier: cmdKey,
+            Keys.plainTextModifier: shiftKey,
             Keys.launchAtLogin: false,
             Keys.pasteDirectly: true,
             Keys.playSound: false,
@@ -117,6 +183,8 @@ final class Settings {
         historyLimit = d.integer(forKey: Keys.historyLimit)
         hotkeyKeyCode = d.integer(forKey: Keys.hotkeyKeyCode)
         hotkeyModifiers = d.integer(forKey: Keys.hotkeyModifiers)
+        quickPasteModifier = d.integer(forKey: Keys.quickPasteModifier)
+        plainTextModifier = d.integer(forKey: Keys.plainTextModifier)
         launchAtLogin = d.bool(forKey: Keys.launchAtLogin)
         pasteDirectly = d.bool(forKey: Keys.pasteDirectly)
         playSound = d.bool(forKey: Keys.playSound)
@@ -133,6 +201,10 @@ final class Settings {
 
     var hotkeyDisplay: String {
         HotKeyCenter.describe(keyCode: hotkeyKeyCode, modifiers: hotkeyModifiers)
+    }
+
+    var quickPasteModifierDisplay: String {
+        ShortcutModifier(carbonValue: quickPasteModifier)?.symbol ?? "⌘"
     }
 
     func isIgnoringSourceApp(_ bundleID: String?) -> Bool {
