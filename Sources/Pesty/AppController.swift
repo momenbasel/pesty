@@ -77,19 +77,30 @@ final class AppController: NSObject, NSApplicationDelegate {
         store.saveNow()
     }
 
-    /// The escape hatch for a hidden menu bar icon.
+    /// Reopening from Finder, Spotlight, or the Dock surfaces the app.
     ///
-    /// Pesty is an accessory app, so with the status item hidden there is no Dock icon,
-    /// no window, and no menu - and if the global hotkey failed to register because
-    /// another app already owns the combination, there is no way back in at all short of
-    /// deleting the preference from Terminal. Opening Pesty again from Finder or
-    /// Spotlight brings the icon back and shows Settings.
+    /// The escape hatch comes first: Pesty is an accessory app, so with the status
+    /// item hidden there is no Dock icon, no window, and no menu - and if the global
+    /// hotkey failed to register because another app already owns the combination,
+    /// there is no way back in at all short of deleting the preference from Terminal.
+    /// Opening Pesty again brings the icon back and shows Settings so the user can
+    /// fix whatever forced the relaunch.
+    ///
+    /// A normal reopen shows the Paste Bar - the primary interface should be
+    /// discoverable without the keyboard shortcut. `hasVisibleWindows` cannot be
+    /// trusted for that decision because the bar is an NSPanel, so ask the explicit
+    /// presentation state instead; a duplicate reopen event coalesces naturally
+    /// because `isPresented` flips as soon as the first show begins.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
         if !Settings.shared.showMenuBarIcon {
             Settings.shared.showMenuBarIcon = true
             setMenuBarIconVisible(true)
+            showSettings()
+            return true
         }
-        showSettings()
+        if barController?.isPresented != true {
+            showBar()
+        }
         return true
     }
 
