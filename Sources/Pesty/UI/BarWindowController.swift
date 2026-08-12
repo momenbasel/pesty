@@ -143,6 +143,7 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
     func show() {
         guard let panel = window else { return }
         guard let screen = Self.targetScreen() else { return }
+        panel.level = Settings.shared.hideOnClickOutside ? .modalPanel : .floating
         let vf = screen.visibleFrame
         let height = min(CGFloat(Settings.shared.barHeight), vf.height)
         let onScreen = NSRect(x: vf.minX, y: vf.minY, width: vf.width, height: height)
@@ -174,7 +175,8 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
                 // The panel can lose key focus while it is still animating up, and
                 // windowDidResignKey ignores that because the bar is not .shown yet.
                 // Catch it here so the bar does not sit on screen unfocused forever.
-                if panel.isVisible, !panel.isKeyWindow, !AppController.shared.suppressAutoHide {
+                if Settings.shared.hideOnClickOutside,
+                   panel.isVisible, !panel.isKeyWindow, !AppController.shared.suppressAutoHide {
                     AppController.shared.hideBar()
                 }
             }
@@ -222,7 +224,9 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowDidResignKey(_ notification: Notification) {
-        guard phase == .shown, !AppController.shared.suppressAutoHide else { return }
+        guard Settings.shared.hideOnClickOutside,
+              phase == .shown,
+              !AppController.shared.suppressAutoHide else { return }
         AppController.shared.hideBar()
     }
 }

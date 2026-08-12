@@ -60,6 +60,7 @@ final class Settings {
         static let quickPasteModifier = "quickPasteModifier"
         static let plainTextModifier = "plainTextModifier"
         static let launchAtLogin = "launchAtLogin"
+        static let hideOnClickOutside = "hideOnClickOutside"
         static let pasteDirectly = "pasteDirectly"
         static let playSound = "playSound"
         static let ignoreConcealed = "ignoreConcealed"
@@ -109,6 +110,10 @@ final class Settings {
     var launchAtLogin: Bool {
         didSet { guard isLoaded else { return }
             d.set(launchAtLogin, forKey: Keys.launchAtLogin); LaunchAtLogin.set(enabled: launchAtLogin) }
+    }
+
+    var hideOnClickOutside: Bool {
+        didSet { guard isLoaded else { return }; d.set(hideOnClickOutside, forKey: Keys.hideOnClickOutside) }
     }
 
     var pasteDirectly: Bool {
@@ -167,6 +172,7 @@ final class Settings {
             Keys.quickPasteModifier: cmdKey,
             Keys.plainTextModifier: shiftKey,
             Keys.launchAtLogin: false,
+            Keys.hideOnClickOutside: true,
             Keys.pasteDirectly: true,
             Keys.playSound: false,
             Keys.ignoreConcealed: true,
@@ -183,6 +189,7 @@ final class Settings {
         quickPasteModifier = d.integer(forKey: Keys.quickPasteModifier)
         plainTextModifier = d.integer(forKey: Keys.plainTextModifier)
         launchAtLogin = d.bool(forKey: Keys.launchAtLogin)
+        hideOnClickOutside = d.bool(forKey: Keys.hideOnClickOutside)
         pasteDirectly = d.bool(forKey: Keys.pasteDirectly)
         playSound = d.bool(forKey: Keys.playSound)
         ignoreConcealed = d.bool(forKey: Keys.ignoreConcealed)
