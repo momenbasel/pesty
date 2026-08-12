@@ -116,10 +116,25 @@ final class ClipboardStore {
         for item in removed { deleteImageFile(item) }
     }
 
+    /// Deletes a clip from the collection currently on screen only. A Pinboard
+    /// is an independently saved collection: deleting a card from history must
+    /// not erase saved copies, and deleting a pinboard copy must not touch
+    /// history or other pinboards, even for legacy clips that share an id.
+    /// Deleting exactly what was removed also closes an image-file leak: the
+    /// old cross-container removal deleted entries under two file names but
+    /// cleaned up only one of them.
     func delete(_ item: ClipItem) {
-        history.removeAll { $0.id == item.id }
-        for i in pinboards.indices { pinboards[i].items.removeAll { $0.id == item.id } }
-        deleteImageFile(item)
+        let removed: [ClipItem]
+        switch source {
+        case .history:
+            removed = history.filter { $0.id == item.id }
+            history.removeAll { $0.id == item.id }
+        case .pinboard(let boardID):
+            guard let boardIndex = pinboards.firstIndex(where: { $0.id == boardID }) else { return }
+            removed = pinboards[boardIndex].items.filter { $0.id == item.id }
+            pinboards[boardIndex].items.removeAll { $0.id == item.id }
+        }
+        for entry in removed { deleteImageFile(entry) }
         if selectedID == item.id { selectFirst() }
         scheduleSave()
     }
