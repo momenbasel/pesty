@@ -3,7 +3,7 @@ import SwiftUI
 import Carbon.HIToolbox
 
 @MainActor
-final class AppController: NSObject, NSApplicationDelegate {
+final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     static let shared = AppController()
 
     let store = ClipboardStore.shared
@@ -13,6 +13,8 @@ final class AppController: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var pauseMenuItem: NSMenuItem?
     private var settingsWindow: NSWindow?
+    private var previewWindow: NSWindow?
+    private var previewedItemID: UUID?
     private var keyMonitor: Any?
 
     private(set) var previousApp: NSRunningApplication?
@@ -28,6 +30,7 @@ final class AppController: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        installMainMenu()
 
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(appActivated(_:)),
@@ -83,6 +86,12 @@ final class AppController: NSObject, NSApplicationDelegate {
         store.saveNow()
     }
 
+    func windowWillClose(_ notification: Notification) {
+        if notification.object as? NSWindow === previewWindow {
+            previewedItemID = nil
+        }
+    }
+
     /// Reopening from Finder, Spotlight, or the Dock surfaces the app.
     ///
     /// The escape hatch comes first: Pesty is an accessory app, so with the status
@@ -108,6 +117,49 @@ final class AppController: NSObject, NSApplicationDelegate {
             showBar()
         }
         return true
+    }
+
+    private func installMainMenu() {
+        let main = NSMenu()
+
+        let appItem = NSMenuItem()
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "About Pesty", action: #selector(menuAbout), keyEquivalent: "").target = self
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Settings…", action: #selector(menuSettings), keyEquivalent: ",").target = self
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Hide Pesty", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: "Quit Pesty", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appItem.submenu = appMenu
+        main.addItem(appItem)
+
+        let editItem = NSMenuItem()
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenu.addItem(.separator())
+        let find = editMenu.addItem(withTitle: "Find…",
+                                    action: #selector(NSTextView.performTextFinderAction(_:)),
+                                    keyEquivalent: "f")
+        find.tag = NSTextFinder.Action.showFindInterface.rawValue
+        editItem.submenu = editMenu
+        main.addItem(editItem)
+
+        let windowItem = NSMenuItem()
+        let windowMenu = NSMenu(title: "Window")
+        windowMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        windowMenu.addItem(withTitle: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        windowItem.submenu = windowMenu
+        main.addItem(windowItem)
+        NSApp.windowsMenu = windowMenu
+
+        NSApp.mainMenu = main
     }
 
     private func setupStatusItem() {
@@ -275,6 +327,82 @@ final class AppController: NSObject, NSApplicationDelegate {
         let change = PasteService.copy(item)
         monitor.suppressUntilChangeCount = change
         hideBar()
+    }
+
+    var pasteMenuTitle: String {
+        guard let name = pasteTarget?.localizedName,
+              !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return "Paste"
+        }
+        return "Paste to \(name)"
+    }
+
+    func editItem(_ item: ClipItem, launchWritingTools: Bool = false) {
+        suppressAutoHide = true
+        defer { suppressAutoHide = false }
+
+        guard let edit = ClipEditor.run(for: item, launchWritingTools: launchWritingTools) else { return }
+
+        let changed: Bool
+        switch edit {
+        case let .text(text, richTextData):
+            changed = store.updateTextContent(text, richTextData: richTextData, for: item)
+        case let .color(hex):
+            changed = store.updateColorContent(hex, for: item)
+        }
+        guard changed, let updated = store.item(withID: item.id) else { return }
+        if previewedItemID == item.id { showPreview(for: updated) }
+    }
+
+    func showPreview(for item: ClipItem) {
+        suppressAutoHide = true
+        defer { suppressAutoHide = false }
+        NSApp.activate(ignoringOtherApps: true)
+
+        let host = NSHostingController(rootView: ClipPreviewView(item: item))
+        let title = "Preview — \(item.displayTitle)"
+        previewedItemID = item.id
+
+        if let window = previewWindow {
+            window.title = title
+            window.contentViewController = host
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let window = NSWindow(contentViewController: host)
+        window.title = title
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.setContentSize(NSSize(width: 540, height: 400))
+        window.minSize = NSSize(width: 400, height: 260)
+        window.isReleasedWhenClosed = false
+        window.delegate = self
+        window.center()
+        previewWindow = window
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    func showSharePicker(for item: ClipItem) {
+        let items = shareItems(for: item)
+        guard !items.isEmpty,
+              let view = barController?.window?.contentView ?? NSApp.keyWindow?.contentView else { return }
+        suppressAutoHide = true
+        defer { suppressAutoHide = false }
+        let picker = NSSharingServicePicker(items: items)
+        let anchor = NSRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+        picker.show(relativeTo: anchor, of: view, preferredEdge: .maxY)
+    }
+
+    private func shareItems(for item: ClipItem) -> [Any] {
+        switch item.type {
+        case .image:
+            return store.loadImage(for: item).map { [$0] } ?? []
+        case .file:
+            let urls = item.fileURLs.compactMap(URL.init(string:)).filter(\.isFileURL)
+            return urls.isEmpty ? (item.plainText.map { [$0 as NSString] } ?? []) : urls
+        case .color, .text, .richText, .link:
+            return item.plainText.map { [$0 as NSString] } ?? []
+        }
     }
 
     func deleteEffectiveSelection() {

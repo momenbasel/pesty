@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ClipCardView: View {
@@ -192,36 +193,118 @@ struct ClipCardView: View {
 
     @ViewBuilder
     private var menu: some View {
-        Button("Paste") { AppController.shared.pasteItem(item) }
-        Button("Copy") { AppController.shared.copyItem(item) }
+        Button { AppController.shared.pasteItem(item) } label: {
+            Label(AppController.shared.pasteMenuTitle, systemImage: "doc.on.clipboard")
+        }
+
+        Button { AppController.shared.pasteItem(item, asPlainText: true) } label: {
+            Label("Paste as Plain Text", systemImage: "text.alignleft")
+        }
+        .disabled(item.plainText == nil)
+
+        Button { AppController.shared.copyItem(item) } label: {
+            Label("Copy", systemImage: "doc.on.doc")
+        }
+
         Divider()
-        if !store.pinboards.isEmpty {
-            Menu("Save to Pinboard") {
+
+        Button { AppController.shared.editItem(item) } label: {
+            Label("Edit", systemImage: "pencil")
+        }
+        .disabled(!isEditable)
+
+        if writingToolsAvailable {
+            Button { AppController.shared.editItem(item, launchWritingTools: true) } label: {
+                Label("Writing Tools", systemImage: "pencil.and.scribble")
+            }
+        }
+
+        Button { renameItem() } label: {
+            Label("Rename…", systemImage: "pencil.line")
+        }
+
+        Divider()
+
+        Menu {
+            if store.pinboards.isEmpty {
+                Button("No Pinboards Yet") {}
+                    .disabled(true)
+            } else {
                 ForEach(store.pinboards) { b in
-                    Button(b.name) { store.saveToPinboard(item, boardID: b.id) }
+                    Button { store.saveToPinboard(item, boardID: b.id) } label: {
+                        Label {
+                            Text(b.name)
+                        } icon: {
+                            Image(nsImage: Self.pinboardMenuIcon(color: NSColor(b.color)))
+                                .renderingMode(.original)
+                        }
+                    }
                 }
             }
-        }
-        Button("Save to New Pinboard…") {
-            if let name = TextPrompt.run(title: "New Pinboard", message: "Name") {
-                let b = store.addPinboard(name: name)
-                store.saveToPinboard(item, boardID: b.id)
+            Divider()
+            Button { pinToNewBoard() } label: {
+                Label("Create Pinboard…", systemImage: "plus")
             }
+        } label: {
+            Label("Pin", systemImage: "pin")
         }
-        Button("Edit Title…") {
-            if let t = TextPrompt.run(title: "Edit Title", message: "Card title",
-                                      defaultValue: item.customTitle ?? "") {
-                store.setTitle(t, for: item)
-            }
-        }
+
         Divider()
-        Button(deleteMenuTitle, role: .destructive) {
+
+        Button { AppController.shared.showPreview(for: item) } label: {
+            Label("Preview", systemImage: "eye")
+        }
+
+        Button { AppController.shared.showSharePicker(for: item) } label: {
+            Label("Share", systemImage: "square.and.arrow.up")
+        }
+
+        Divider()
+
+        Button(role: .destructive) {
             AppController.shared.deleteSelection(containing: item)
+        } label: {
+            Label(deleteMenuTitle, systemImage: "trash")
         }
     }
 
     private var deleteMenuTitle: String {
         let count = store.multiSelectedIDs.contains(item.id) ? store.multiSelectedIDs.count : 1
         return count > 1 ? "Delete \(count) Clips" : "Delete"
+    }
+
+    private var isEditable: Bool {
+        [.text, .richText, .link, .color].contains(item.type)
+    }
+
+    private var writingToolsAvailable: Bool {
+        guard [.text, .richText, .link].contains(item.type) else { return false }
+        guard #available(macOS 15.2, *) else { return false }
+        return NSWritingToolsCoordinator.isWritingToolsAvailable
+    }
+
+    private func renameItem() {
+        if let title = TextPrompt.run(title: "Rename", message: "Card title",
+                                      defaultValue: item.customTitle ?? "") {
+            store.setTitle(title, for: item)
+        }
+    }
+
+    private func pinToNewBoard() {
+        if let name = TextPrompt.run(title: "Create Pinboard", message: "Name") {
+            let board = store.addPinboard(name: name)
+            store.saveToPinboard(item, boardID: board.id)
+        }
+    }
+
+    private static func pinboardMenuIcon(color: NSColor) -> NSImage {
+        let size = NSSize(width: 12, height: 12)
+        let image = NSImage(size: size, flipped: false) { rect in
+            color.setFill()
+            NSBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1)).fill()
+            return true
+        }
+        image.isTemplate = false
+        return image
     }
 }

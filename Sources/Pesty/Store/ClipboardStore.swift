@@ -279,6 +279,92 @@ final class ClipboardStore {
         scheduleSave()
     }
 
+    func item(withID id: UUID) -> ClipItem? {
+        if let item = history.first(where: { $0.id == id }) { return item }
+        return pinboards.lazy.flatMap(\.items).first(where: { $0.id == id })
+    }
+
+    @discardableResult
+    func updateTextContent(_ text: String, richTextData: Data? = nil, for item: ClipItem) -> Bool {
+        guard [.text, .richText, .link].contains(item.type),
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        let type: ClipType = richTextData != nil ? .richText : (isWebLink(text) ? .link : .text)
+        return updateContent(of: item) { existing in
+            var updated = existing
+            updated.type = type
+            updated.text = text
+            updated.rtfData = richTextData
+            updated.colorHex = nil
+            return updated
+        }
+    }
+
+    @discardableResult
+    func updateColorContent(_ hex: String, for item: ClipItem) -> Bool {
+        guard item.type == .color, let color = NSColor(hex: hex) else { return false }
+        let normalized = color.hexString
+        return updateContent(of: item) { existing in
+            var updated = existing
+            updated.type = .color
+            updated.text = nil
+            updated.rtfData = nil
+            updated.colorHex = normalized
+            return updated
+        }
+    }
+
+    private func updateContent(of item: ClipItem, transform: (ClipItem) -> ClipItem) -> Bool {
+        var changed = false
+        let now = Date()
+
+        if let i = history.firstIndex(where: { $0.id == item.id }) {
+            var updated = transform(history[i])
+            if updated != history[i] {
+                updated.createdAt = now
+                history.remove(at: i)
+                removeContentDuplicates(of: updated, in: &history)
+                history.insert(updated, at: 0)
+                changed = true
+            }
+        }
+
+        for b in pinboards.indices {
+            guard let i = pinboards[b].items.firstIndex(where: { $0.id == item.id }) else { continue }
+            var updated = transform(pinboards[b].items[i])
+            if updated != pinboards[b].items[i] {
+                updated.createdAt = now
+                pinboards[b].items[i] = updated
+                removeContentDuplicates(of: updated, in: &pinboards[b].items)
+                changed = true
+            }
+        }
+
+        guard changed else { return false }
+        retentionPrunedRecordNames.remove(item.id.uuidString)
+        if selectedItem == nil { selectFirst() }
+        reconcileMultiSelection()
+        scheduleSave()
+        return true
+    }
+
+    private func removeContentDuplicates(of item: ClipItem, in items: inout [ClipItem]) {
+        let key = contentKey(item)
+        let duplicates = items.filter { $0.id != item.id && contentKey($0) == key }
+        guard !duplicates.isEmpty else { return }
+        items.removeAll { $0.id != item.id && contentKey($0) == key }
+        for duplicate in duplicates { deleteImageFile(duplicate) }
+    }
+
+    private func isWebLink(_ text: String) -> Bool {
+        let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.contains(" "), !value.contains("\n"),
+              let url = URL(string: value),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              url.host != nil else { return false }
+        return true
+    }
+
     func setTitle(_ title: String, for item: ClipItem) {
         if let i = history.firstIndex(where: { $0.id == item.id }) { history[i].customTitle = title }
         for b in pinboards.indices {
