@@ -102,6 +102,11 @@ struct BarView: View {
         .fixedSize()
     }
 
+    /// Identifies the padded scroll content, so a presentation reset can land
+    /// on the strip's natural resting offset - anchoring the first card's
+    /// leading edge instead would scroll the horizontal inset out of view.
+    private static let stripStartID = "stripStart"
+
     private var strip: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
@@ -120,6 +125,14 @@ struct BarView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 26)
                 .animation(.spring(response: 0.34, dampingFraction: 0.8), value: store.visibleItems.count)
+                .id(Self.stripStartID)
+            }
+            .onChange(of: store.barPresentationToken) { _, _ in
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    proxy.scrollTo(Self.stripStartID, anchor: .leading)
+                }
             }
             .onChange(of: store.selectedID) { _, id in
                 guard let id else { return }

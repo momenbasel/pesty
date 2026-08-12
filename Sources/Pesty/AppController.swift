@@ -223,7 +223,7 @@ final class AppController: NSObject, NSApplicationDelegate {
         }
         store.searchText = ""
         store.source = .history
-        store.selectFirst()
+        store.prepareForBarPresentation()
 
         // Rebuild if the panel was ever torn down - a nil window is another way the
         // bar silently stops appearing.

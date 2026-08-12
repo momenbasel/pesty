@@ -22,6 +22,12 @@ final class ClipboardStore {
     var searchText: String = ""
     var selectedID: UUID?
 
+    /// Bumped every time the bar is about to present. The hosting view is
+    /// built once and cached, so the strip keeps its scroll offset across
+    /// hide/show; selection alone cannot reset it because the newest clip is
+    /// usually already selected and `onChange` never fires for equal values.
+    private(set) var barPresentationToken = 0
+
     var historyLimit: Int {
         get { Settings.shared.historyLimit }
         set { Settings.shared.historyLimit = newValue; trimHistory() }
@@ -202,6 +208,11 @@ final class ClipboardStore {
     }
 
     func selectFirst() { selectedID = visibleItems.first?.id }
+
+    func prepareForBarPresentation() {
+        barPresentationToken &+= 1
+        selectFirst()
+    }
 
     func moveSelection(by delta: Int) {
         let items = visibleItems
