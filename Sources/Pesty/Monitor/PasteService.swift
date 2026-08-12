@@ -3,6 +3,13 @@ import Carbon.HIToolbox
 
 @MainActor
 enum PasteService {
+    private static let sourceType = NSPasteboard.PasteboardType("org.nspasteboard.source")
+    private static let packagedBundleID = "com.greycorelabs.pesty"
+
+    private static func markSource(of item: ClipItem, on pasteboard: NSPasteboard) {
+        let source = item.sourceBundleID ?? Bundle.main.bundleIdentifier ?? packagedBundleID
+        pasteboard.setString(source, forType: sourceType)
+    }
 
     @discardableResult
     static func copy(_ item: ClipItem,
@@ -11,6 +18,7 @@ enum PasteService {
         if asPlainText, let text = item.plainText {
             pasteboard.clearContents()
             pasteboard.setString(text, forType: .string)
+            markSource(of: item, on: pasteboard)
             return pasteboard.changeCount
         }
         if item.type == .image {
@@ -19,6 +27,7 @@ enum PasteService {
             }
             pasteboard.clearContents()
             pasteboard.writeObjects([img])
+            markSource(of: item, on: pasteboard)
             return pasteboard.changeCount
         }
         pasteboard.clearContents()
@@ -40,6 +49,7 @@ enum PasteService {
         case .text, .link:
             if let t = item.text { pasteboard.setString(t, forType: .string) }
         }
+        markSource(of: item, on: pasteboard)
         return pasteboard.changeCount
     }
 
