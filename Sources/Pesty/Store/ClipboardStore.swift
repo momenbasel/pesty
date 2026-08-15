@@ -10,6 +10,15 @@ enum BarSource: Equatable {
     case pinboard(UUID)
 }
 
+/// Whether keyboard focus currently belongs to the native search field or
+/// to the clip strip. Lets the key monitor and the search field agree on
+/// who owns a given keystroke without probing AppKit's first-responder
+/// chain from every call site.
+enum BarInputMode: Equatable {
+    case cards
+    case search
+}
+
 @Observable
 @MainActor
 final class ClipboardStore {
@@ -21,6 +30,7 @@ final class ClipboardStore {
     var source: BarSource = .history {
         didSet { if source != oldValue { clearMultiSelection() } }
     }
+    var barInputMode: BarInputMode = .cards
     var searchText: String = "" {
         didSet { if searchText != oldValue { clearMultiSelection() } }
     }

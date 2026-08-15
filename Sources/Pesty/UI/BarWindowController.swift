@@ -33,6 +33,7 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
 
     private var phase: Phase = .hidden
     private var epoch = 0
+    private let searchBridge = BarSearchFieldBridge()
 
     /// True while the bar is up or on its way up. `AppController.toggleBar` asks this
     /// instead of `window.isVisible`.
@@ -68,7 +69,7 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
         // Without this a stray close() would deallocate the panel and leave `window`
         // nil, which is another way to never show the bar again.
         panel.isReleasedWhenClosed = false
-        let content = NSHostingView(rootView: BarView())
+        let content = NSHostingView(rootView: BarView(searchBridge: searchBridge))
         if #available(macOS 26.0, *) {
             let glassContent = NSView()
             content.translatesAutoresizingMaskIntoConstraints = false
@@ -221,6 +222,19 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
         _ = beginTransition()
         phase = .hidden
         window?.orderOut(nil)
+    }
+
+    var searchOwnsFirstResponder: Bool {
+        searchBridge.ownsFirstResponder(in: window)
+    }
+
+    @discardableResult
+    func focusSearchAtEnd() -> Bool {
+        searchBridge.focusAtEnd()
+    }
+
+    func resignSearch() {
+        searchBridge.resign()
     }
 
     func windowDidResignKey(_ notification: Notification) {

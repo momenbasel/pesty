@@ -298,6 +298,47 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         barController?.hide()
     }
 
+    func setBarSearchEditing(_ editing: Bool) {
+        let mode: BarInputMode = editing ? .search : .cards
+        guard store.barInputMode != mode else { return }
+        store.barInputMode = mode
+    }
+
+    /// Routes every edit from the native search field through here instead
+    /// of writing `store.searchText` directly, so the selection follows the
+    /// filtered results as you type instead of staying on whatever was
+    /// selected before the query changed.
+    func updateBarSearchText(_ text: String) {
+        guard store.searchText != text else { return }
+        store.searchText = text
+        store.selectFirst()
+    }
+
+    /// Return leaves the query intact and hands arrows/shortcuts back to the
+    /// clip strip. With no result there is nowhere to move, so search keeps
+    /// focus instead.
+    func submitBarSearch() {
+        guard store.barInputMode == .search, !store.visibleItems.isEmpty else { return }
+        barController?.resignSearch()
+        store.barInputMode = .cards
+    }
+
+    func clearBarSearch() {
+        let hadQuery = !store.searchText.isEmpty
+        barController?.resignSearch()
+        store.searchText = ""
+        store.barInputMode = .cards
+        if hadQuery { store.selectFirst(); searchClearedAt = Date() }
+    }
+
+    func cancelBarSearchOrHide() {
+        if !store.searchText.isEmpty {
+            clearBarSearch()
+        } else {
+            hideBar()
+        }
+    }
+
     func pasteSelected() {
         guard let item = store.selectedItem else { return }
         pasteItem(item)
@@ -509,6 +550,14 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // monitor is only responsible for keys delivered to the panel itself.
         guard event.window === barController?.window else { return event }
 
+        // The native search field owns the entire event while it is editing:
+        // arrows, selection, clipboard commands, deletion, spaces, keyboard
+        // layouts, and composed text all need real AppKit text-editing
+        // behavior, not this monitor's clip-navigation shortcuts.
+        if barController?.searchOwnsFirstResponder == true {
+            return event
+        }
+
         if handleBarCommandShortcut(event) { return nil }
 
         let code = Int(event.keyCode)
@@ -551,7 +600,16 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             store.moveSelection(by: 1); return nil
         case kVK_Delete:
             if cmd { deleteEffectiveSelection(); return nil }
+            // Backspace edits the query before it can remove a filtered clip,
+            // even when focus has already moved back to the cards (e.g.
+            // after Return submitted the search). Refocusing the native
+            // field and returning the same event lets it handle the
+            // backspace itself, rather than manually mutating the string.
             if !store.searchText.isEmpty {
+                store.barInputMode = .search
+                if barController?.focusSearchAtEnd() == true {
+                    return event
+                }
                 store.searchText.removeLast(); store.selectFirst()
                 if store.searchText.isEmpty { searchClearedAt = Date() }
                 return nil
@@ -577,12 +635,19 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             break
         }
 
-        if !cmd && !ctrl && !opt,
-           let chars = event.characters, chars.count == 1,
-           let scalar = chars.unicodeScalars.first,
-           scalar.value >= 32, scalar.value != 127 {
-            store.searchText.append(chars)
-            store.selectFirst()
+        if isPrintableTextIntent(event) {
+            store.barInputMode = .search
+            if barController?.focusSearchAtEnd() == true {
+                // The local monitor runs before responder dispatch. Returning
+                // the same event now sends its very first character directly
+                // to the newly focused native field editor — no character is
+                // lost transferring focus mid-keystroke.
+                return event
+            }
+            if let chars = fallbackSearchCharacters(from: event) {
+                store.searchText.append(chars)
+                store.selectFirst()
+            }
             return nil
         }
         return event
@@ -599,6 +664,33 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let nextIndex = (currentIndex + delta % sources.count + sources.count) % sources.count
         store.source = sources[nextIndex]
         store.selectFirst()
+    }
+
+    private func isPrintableTextIntent(_ event: NSEvent) -> Bool {
+        let flags = event.modifierFlags
+        guard !flags.contains(.command),
+              !flags.contains(.control),
+              let chars = event.charactersIgnoringModifiers,
+              !chars.isEmpty else { return false }
+        return chars.unicodeScalars.contains {
+            $0.value >= 0x20
+                && $0.value != 0x7F
+                && !(0xF700...0xF8FF).contains($0.value)
+        }
+    }
+
+    private func fallbackSearchCharacters(from event: NSEvent) -> String? {
+        let flags = event.modifierFlags
+        guard !flags.contains(.command),
+              !flags.contains(.control),
+              let chars = event.characters,
+              !chars.isEmpty,
+              chars.unicodeScalars.allSatisfy({
+                  $0.value >= 0x20
+                      && $0.value != 0x7F
+                      && !(0xF700...0xF8FF).contains($0.value)
+              }) else { return nil }
+        return chars
     }
 
     private static func quickPasteDigit(for keyCode: Int) -> Int? {
