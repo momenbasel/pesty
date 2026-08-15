@@ -127,6 +127,16 @@ final class ClipboardStore {
         scheduleSave()
     }
 
+    /// A Copy from the Paste Bar is an intentional use of an existing clip.
+    /// Promote it explicitly because the clipboard monitor correctly ignores
+    /// Pesty's own pasteboard writes, so a plain re-copy would otherwise leave
+    /// the clip sitting wherever it already was in history.
+    func promoteCopiedItem(_ item: ClipItem, at date: Date = .now) {
+        var copied = item
+        copied.createdAt = date
+        addCaptured(copied)
+    }
+
     func applyRetentionPolicy() { trimHistory(); scheduleSave() }
 
     func retentionRemovalCount(mode: HistoryRetentionMode, limit: Int, days: Int) -> Int {
