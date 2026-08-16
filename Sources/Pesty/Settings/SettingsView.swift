@@ -243,11 +243,41 @@ private struct HistoryRetentionSettings: View {
     @State private var draftDays = Settings.shared.historyRetentionDays
     @State private var pendingRemovalCount = 0
     @State private var confirmingChange = false
+    @State private var storageBytes: Int64?
 
     private static let dayChoices: [(days: Int, label: String)] = [
         (1, "1 Day"), (7, "1 Week"), (14, "2 Weeks"), (30, "1 Month"),
         (90, "3 Months"), (180, "6 Months"), (365, "1 Year")
     ]
+
+    private var storageSummary: String {
+        let count = ClipboardStore.shared.history.count
+        let clips = "\(count) clip\(count == 1 ? "" : "s")"
+        guard let storageBytes else { return clips }
+        return "\(clips) · \(ByteCountFormatter.string(fromByteCount: storageBytes, countStyle: .file))"
+    }
+
+    private func refreshStorageSize() async {
+        let dir = ClipboardStore.shared.dataDirectory
+        storageBytes = await Task.detached(priority: .utility) {
+            Self.directorySize(at: dir)
+        }.value
+    }
+
+    /// Walks the store directory off the main actor; images can make it
+    /// large enough that a synchronous walk would hitch the Settings window.
+    nonisolated private static func directorySize(at url: URL) -> Int64 {
+        let keys: Set<URLResourceKey> = [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey, .isRegularFileKey]
+        guard let enumerator = FileManager.default.enumerator(at: url,
+                                                              includingPropertiesForKeys: Array(keys)) else { return 0 }
+        var total: Int64 = 0
+        for case let file as URL in enumerator {
+            guard let values = try? file.resourceValues(forKeys: keys),
+                  values.isRegularFile == true else { continue }
+            total += Int64(values.totalFileAllocatedSize ?? values.fileAllocatedSize ?? 0)
+        }
+        return total
+    }
 
     var body: some View {
         Section("History") {
@@ -271,7 +301,9 @@ private struct HistoryRetentionSettings: View {
             Text(footnote)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            LabeledContent("Currently storing", value: storageSummary)
         }
+        .task { await refreshStorageSize() }
         .onChange(of: draftMode) { evaluateDraft() }
         .onChange(of: draftLimit) { evaluateDraft() }
         .onChange(of: draftDays) { evaluateDraft() }

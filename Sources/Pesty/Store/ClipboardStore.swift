@@ -66,6 +66,10 @@ final class ClipboardStore {
 
     var iCloudAvailable: Bool { ClipboardStore.iCloudBase != nil }
 
+    /// The on-disk store root (history JSON plus saved images), exposed so
+    /// Settings can report how much space history actually uses.
+    var dataDirectory: URL { baseDir }
+
     private init() {
         let base = (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil) ?? ClipboardStore.localBase
         baseDir = base
