@@ -59,6 +59,85 @@ enum HistoryRetentionMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// The discrete stops on the time-based retention slider. `historyRetentionDays`
+/// stays the underlying source of truth (a raw day count, with 0 meaning
+/// "forever" - never prune by age) - this just names the stops so the slider
+/// can snap between them instead of offering a raw number field.
+enum HistoryRetentionPreset: Int, CaseIterable, Identifiable {
+    case day
+    case week
+    case twoWeeks
+    case threeWeeks
+    case month
+    case twoMonths
+    case threeMonths
+    case sixMonths
+    case year
+    case forever
+
+    var id: Int { rawValue }
+
+    /// 0 means forever - no automatic time-based pruning.
+    var days: Int {
+        switch self {
+        case .day: return 1
+        case .week: return 7
+        case .twoWeeks: return 14
+        case .threeWeeks: return 21
+        case .month: return 30
+        case .twoMonths: return 60
+        case .threeMonths: return 90
+        case .sixMonths: return 180
+        case .year: return 365
+        case .forever: return 0
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .day: return "1 Day"
+        case .week: return "1 Week"
+        case .twoWeeks: return "2 Weeks"
+        case .threeWeeks: return "3 Weeks"
+        case .month: return "1 Month"
+        case .twoMonths: return "2 Months"
+        case .threeMonths: return "3 Months"
+        case .sixMonths: return "6 Months"
+        case .year: return "1 Year"
+        case .forever: return "Forever"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .day: return "1d"
+        case .week: return "1w"
+        case .twoWeeks: return "2w"
+        case .threeWeeks: return "3w"
+        case .month: return "1m"
+        case .twoMonths: return "2m"
+        case .threeMonths: return "3m"
+        case .sixMonths: return "6m"
+        case .year: return "1y"
+        case .forever: return "∞"
+        }
+    }
+
+    var sliderIndex: Double { Double(rawValue) }
+
+    /// Snaps an arbitrary day count (including ones from before this preset
+    /// set existed) to its nearest stop, so old UserDefaults values still
+    /// land on a sensible position on the slider.
+    init(nearestDays days: Int) {
+        self = Self.allCases.min(by: { abs($0.days - days) < abs($1.days - days) }) ?? .month
+    }
+
+    init(sliderIndex: Double) {
+        let index = min(Self.allCases.count - 1, max(0, Int(sliderIndex.rounded())))
+        self = Self.allCases[index]
+    }
+}
+
 @Observable
 @MainActor
 final class Settings {
@@ -104,10 +183,13 @@ final class Settings {
         }
     }
 
+    /// A raw day count for time-based pruning; 0 means forever (no automatic
+    /// pruning by age). See `HistoryRetentionPreset` for the named stops the
+    /// Settings slider snaps this to.
     var historyRetentionDays: Int {
         didSet {
             guard isLoaded else { return }
-            if historyRetentionDays < 1 { historyRetentionDays = 1; return }
+            if historyRetentionDays < 0 { historyRetentionDays = 0; return }
             d.set(historyRetentionDays, forKey: Keys.historyRetentionDays)
         }
     }
@@ -226,7 +308,7 @@ final class Settings {
         historyLimit = d.integer(forKey: Keys.historyLimit)
         historyRetentionMode = HistoryRetentionMode(rawValue: d.string(forKey: Keys.historyRetentionMode) ?? "")
             ?? .itemCount
-        historyRetentionDays = max(1, d.integer(forKey: Keys.historyRetentionDays))
+        historyRetentionDays = max(0, d.integer(forKey: Keys.historyRetentionDays))
         hotkeyKeyCode = d.integer(forKey: Keys.hotkeyKeyCode)
         hotkeyModifiers = d.integer(forKey: Keys.hotkeyModifiers)
         quickPasteModifier = d.integer(forKey: Keys.quickPasteModifier)

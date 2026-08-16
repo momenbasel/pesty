@@ -245,10 +245,14 @@ private struct HistoryRetentionSettings: View {
     @State private var confirmingChange = false
     @State private var storageBytes: Int64?
 
-    private static let dayChoices: [(days: Int, label: String)] = [
-        (1, "1 Day"), (7, "1 Week"), (14, "2 Weeks"), (30, "1 Month"),
-        (90, "3 Months"), (180, "6 Months"), (365, "1 Year")
-    ]
+    private var draftPreset: HistoryRetentionPreset { HistoryRetentionPreset(nearestDays: draftDays) }
+
+    private var draftPresetSliderValue: Binding<Double> {
+        Binding(
+            get: { draftPreset.sliderIndex },
+            set: { draftDays = HistoryRetentionPreset(sliderIndex: $0).days }
+        )
+    }
 
     private var storageSummary: String {
         let store = ClipboardStore.shared
@@ -281,7 +285,7 @@ private struct HistoryRetentionSettings: View {
     }
 
     var body: some View {
-        Section("History") {
+        Section {
             Picker("Limit history by", selection: $draftMode) {
                 ForEach(HistoryRetentionMode.allCases) { mode in
                     Text(mode.title).tag(mode)
@@ -292,16 +296,59 @@ private struct HistoryRetentionSettings: View {
                 Stepper(value: $draftLimit, in: 50...5000, step: 50) {
                     LabeledContent("Keep at most", value: "\(draftLimit) clips")
                 }
-            } else {
-                Picker("Remove clips older than", selection: $draftDays) {
-                    ForEach(Self.dayChoices, id: \.days) { choice in
-                        Text(choice.label).tag(choice.days)
+            }
+        } header: {
+            Text("History")
+        } footer: {
+            // On macOS, Form(.formStyle(.grouped)) lays out every row placed
+            // in a Section's *body* on a shared two-column label/control grid
+            // (backed by NSGridView), sized from the widest label anywhere in
+            // that Section - here "Limit history by". Any native AppKit
+            // control dropped into that body (Slider, Picker, Stepper, ...)
+            // gets clamped and shifted into the trailing "control column" of
+            // that grid, even with no visible label of its own and even with
+            // an explicit SwiftUI .frame() on it, because the constraint is
+            // applied by the grid to the control's AppKit host view *after*
+            // SwiftUI layout runs - which is why .frame(maxWidth: .infinity),
+            // an HStack wrapper, and a GeometryReader forcing an exact width
+            // all had zero effect (confirmed by dumping the live NSView tree:
+            // the same Slider measured ~253pt wide starting at x≈217 in a
+            // 480pt-wide row when placed in the body, vs. ~460pt wide
+            // starting at x≈30 when placed here). A Section's footer is
+            // rendered as plain full-width content below that grid, not as a
+            // grid row, so it never gets pulled into the label/control
+            // layout - which is why moving this block here (rather than
+            // tweaking the Slider itself yet again) actually fixes the width
+            // and alignment, and also guarantees the three rows below line
+            // up with each other since they're now plain VStack siblings
+            // sharing one container instead of being split across the grid.
+            if draftMode != .itemCount {
+                VStack(alignment: .leading, spacing: 9) {
+                    HStack {
+                        Text("Remove clips older than")
+                        Spacer()
+                        Text(draftPreset.title)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    Slider(value: draftPresetSliderValue,
+                           in: 0...Double(HistoryRetentionPreset.allCases.count - 1),
+                           step: 1)
+                    HStack(spacing: 0) {
+                        ForEach(HistoryRetentionPreset.allCases) { preset in
+                            Text(preset.shortTitle)
+                                .font(.system(size: 10, weight: preset == draftPreset ? .bold : .medium))
+                                .foregroundStyle(preset == draftPreset ? Color.accentColor : .secondary)
+                                .frame(maxWidth: .infinity)
+                        }
                     }
                 }
+                .padding(.vertical, 2)
             }
             Text(footnote)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .padding(.top, draftMode == .itemCount ? 0 : 4)
             LabeledContent("History and pinboards on disk", value: storageSummary)
         }
         .task {

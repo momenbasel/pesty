@@ -134,6 +134,10 @@ final class ClipboardStore {
         case .itemCount:
             return max(0, history.count - max(20, limit))
         case .timeInterval:
+            // days == 0 means "forever" - no age-based cutoff, just the safety cap.
+            guard days > 0 else {
+                return max(0, history.count - Self.timeRetentionSafetyCap)
+            }
             let cutoff = Self.retentionCutoff(daysAgo: days)
             let byAge = history.filter { $0.createdAt < cutoff }.count
             return byAge + max(0, (history.count - byAge) - Self.timeRetentionSafetyCap)
@@ -161,11 +165,15 @@ final class ClipboardStore {
                 history.removeLast(history.count - historyLimit)
             }
         case .timeInterval:
-            let cutoff = Self.retentionCutoff(daysAgo: Settings.shared.historyRetentionDays)
-            let old = history.filter { $0.createdAt < cutoff }
-            if !old.isEmpty {
-                removed += old
-                history.removeAll { $0.createdAt < cutoff }
+            // days == 0 means "forever" - skip the age cutoff, keep the safety cap.
+            let days = Settings.shared.historyRetentionDays
+            if days > 0 {
+                let cutoff = Self.retentionCutoff(daysAgo: days)
+                let old = history.filter { $0.createdAt < cutoff }
+                if !old.isEmpty {
+                    removed += old
+                    history.removeAll { $0.createdAt < cutoff }
+                }
             }
             if history.count > Self.timeRetentionSafetyCap {
                 removed += Array(history[Self.timeRetentionSafetyCap...])
