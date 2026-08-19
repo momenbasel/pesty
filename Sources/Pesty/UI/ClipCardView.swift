@@ -1,5 +1,7 @@
 import AppKit
+import ImageIO
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ClipCardView: View {
     let item: ClipItem
@@ -155,11 +157,15 @@ struct ClipCardView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.cardTextPrimary).lineLimit(1)
             }
-            HStack(spacing: 6) {
+            HStack(alignment: .bottom, spacing: 6) {
+                // A path is worth reading in full, so it wraps rather than
+                // collapsing to an ellipsis; everything else stays one line.
                 Text(metaLeft)
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.cardTextSecondary)
-                    .lineLimit(1)
+                    .lineLimit(item.type == .file ? 3 : 1)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 4)
                 if index < 9 {
                     HStack(spacing: 3) {
@@ -175,6 +181,17 @@ struct ClipCardView: View {
         .padding(.top, 8)
     }
 
+    /// Matched on the path extension rather than by loading the file: this is
+    /// evaluated on every card render, so it must not touch disk.
+    private var isSingleImageFile: Bool {
+        guard item.type == .file,
+              item.fileURLs.count == 1,
+              let url = item.fileURLs.first.flatMap(URL.init(string:)),
+              url.isFileURL,
+              let type = UTType(filenameExtension: url.pathExtension) else { return false }
+        return type.conforms(to: .image)
+    }
+
     private var metaLeft: String {
         switch item.type {
         case .text, .richText:
@@ -183,9 +200,24 @@ struct ClipCardView: View {
             return (item.text ?? "").replacingOccurrences(of: "https://", with: "")
                                     .replacingOccurrences(of: "http://", with: "")
         case .file:
-            return "\(item.fileURLs.count) file\(item.fileURLs.count == 1 ? "" : "s")"
+            guard item.fileURLs.count == 1,
+                  let url = item.fileURLs.first.flatMap(URL.init(string:)) else {
+                return item.fileURLs
+                    .compactMap { URL(string: $0)?.lastPathComponent }
+                    .joined(separator: ", ")
+            }
+            // An image shows what it is, so its size is the useful fact; a
+            // screenshot's path is a timestamped folder nobody reads. Files
+            // without a preview get the full location instead, since two
+            // documents of the same name differ only by where they live.
+            if isSingleImageFile {
+                guard let size = ImagePixelSize.of(url) else { return url.lastPathComponent }
+                return "\(Int(size.width)) × \(Int(size.height))"
+            }
+            return (url.path as NSString).abbreviatingWithTildeInPath
         case .image:
-            return "Image"
+            guard let size = ImagePixelSize.of(item) else { return "Image" }
+            return "\(Int(size.width)) × \(Int(size.height))"
         case .color:
             return item.colorHex ?? "Color"
         }
@@ -306,5 +338,30 @@ struct ClipCardView: View {
         }
         image.isTemplate = false
         return image
+    }
+}
+
+/// Reads an image clip's pixel dimensions from the file's metadata instead of
+/// decoding it, and remembers them: the card footer asks on every render.
+@MainActor
+enum ImagePixelSize {
+    private static var cache: [String: CGSize] = [:]
+
+    static func of(_ item: ClipItem) -> CGSize? {
+        guard item.imageFileName != nil,
+              let url = ClipboardStore.shared.imageURL(for: item) else { return nil }
+        return of(url)
+    }
+
+    static func of(_ url: URL) -> CGSize? {
+        let name = url.path
+        if let cached = cache[name] { return cached }
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
+        let size = CGSize(width: width, height: height)
+        cache[name] = size
+        return size
     }
 }
