@@ -153,6 +153,10 @@ Pesty reimplements the parts of Paste people use every day - the slide-up strip,
 
 PRs welcome - see [CONTRIBUTING.md](CONTRIBUTING.md). Good first issues: large preview pane, drag-and-drop out of cards, strip resize handle, iOS/iPad companion, more content-type renderers.
 
+## Also try
+
+[JMacy](https://jmacy.xyz) - the best and fastest downloader for macOS. Multi-connection segmented downloads that saturate your line, plus browser capture and torrents.
+
 ## License
 
 [MIT](LICENSE) © 2026 Moamen Basel.
