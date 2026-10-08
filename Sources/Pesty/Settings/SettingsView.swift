@@ -251,7 +251,8 @@ private struct HistoryRetentionSettings: View {
     ]
 
     private var storageSummary: String {
-        let count = ClipboardStore.shared.history.count
+        let store = ClipboardStore.shared
+        let count = store.history.count + store.pinboards.reduce(0) { $0 + $1.items.count }
         let clips = "\(count) clip\(count == 1 ? "" : "s")"
         guard let storageBytes else { return clips }
         return "\(clips) · \(ByteCountFormatter.string(fromByteCount: storageBytes, countStyle: .file))"
@@ -301,9 +302,14 @@ private struct HistoryRetentionSettings: View {
             Text(footnote)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            LabeledContent("Currently storing", value: storageSummary)
+            LabeledContent("History and pinboards on disk", value: storageSummary)
         }
-        .task { await refreshStorageSize() }
+        .task {
+            await refreshStorageSize()
+            for await _ in NotificationCenter.default.notifications(named: .pestyStoreDidSave) {
+                await refreshStorageSize()
+            }
+        }
         .onChange(of: draftMode) { evaluateDraft() }
         .onChange(of: draftLimit) { evaluateDraft() }
         .onChange(of: draftDays) { evaluateDraft() }
