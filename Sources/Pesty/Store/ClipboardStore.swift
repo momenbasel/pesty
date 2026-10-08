@@ -135,10 +135,9 @@ final class ClipboardStore {
             return max(0, history.count - max(20, limit))
         case .timeInterval:
             // days == 0 means "forever" - no age-based cutoff, just the safety cap.
-            guard days > 0 else {
+            guard let cutoff = Self.retentionCutoff(daysAgo: days) else {
                 return max(0, history.count - Self.timeRetentionSafetyCap)
             }
-            let cutoff = Self.retentionCutoff(daysAgo: days)
             let byAge = history.filter { $0.createdAt < cutoff }.count
             return byAge + max(0, (history.count - byAge) - Self.timeRetentionSafetyCap)
         }
@@ -146,8 +145,9 @@ final class ClipboardStore {
 
     private static let timeRetentionSafetyCap = 5000
 
-    private static func retentionCutoff(daysAgo days: Int) -> Date {
-        Date().addingTimeInterval(-TimeInterval(max(1, days)) * 86_400)
+    private static func retentionCutoff(daysAgo days: Int) -> Date? {
+        guard days > 0 else { return nil }
+        return Date().addingTimeInterval(-TimeInterval(days) * 86_400)
     }
 
     private(set) var retentionPrunedRecordNames: Set<String> = []
@@ -166,9 +166,7 @@ final class ClipboardStore {
             }
         case .timeInterval:
             // days == 0 means "forever" - skip the age cutoff, keep the safety cap.
-            let days = Settings.shared.historyRetentionDays
-            if days > 0 {
-                let cutoff = Self.retentionCutoff(daysAgo: days)
+            if let cutoff = Self.retentionCutoff(daysAgo: Settings.shared.historyRetentionDays) {
                 let old = history.filter { $0.createdAt < cutoff }
                 if !old.isEmpty {
                     removed += old

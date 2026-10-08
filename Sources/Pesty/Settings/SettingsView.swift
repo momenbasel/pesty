@@ -245,14 +245,10 @@ private struct HistoryRetentionSettings: View {
     @State private var confirmingChange = false
     @State private var storageBytes: Int64?
 
-    private var draftPreset: HistoryRetentionPreset { HistoryRetentionPreset(nearestDays: draftDays) }
+    @State private var sliderValue = HistoryRetentionPreset(nearestDays: Settings.shared.historyRetentionDays).sliderIndex
+    @State private var sliderEditing = false
 
-    private var draftPresetSliderValue: Binding<Double> {
-        Binding(
-            get: { draftPreset.sliderIndex },
-            set: { draftDays = HistoryRetentionPreset(sliderIndex: $0).days }
-        )
-    }
+    private var sliderPreset: HistoryRetentionPreset { HistoryRetentionPreset(sliderIndex: sliderValue) }
 
     private var storageSummary: String {
         let store = ClipboardStore.shared
@@ -300,45 +296,29 @@ private struct HistoryRetentionSettings: View {
         } header: {
             Text("History")
         } footer: {
-            // On macOS, Form(.formStyle(.grouped)) lays out every row placed
-            // in a Section's *body* on a shared two-column label/control grid
-            // (backed by NSGridView), sized from the widest label anywhere in
-            // that Section - here "Limit history by". Any native AppKit
-            // control dropped into that body (Slider, Picker, Stepper, ...)
-            // gets clamped and shifted into the trailing "control column" of
-            // that grid, even with no visible label of its own and even with
-            // an explicit SwiftUI .frame() on it, because the constraint is
-            // applied by the grid to the control's AppKit host view *after*
-            // SwiftUI layout runs - which is why .frame(maxWidth: .infinity),
-            // an HStack wrapper, and a GeometryReader forcing an exact width
-            // all had zero effect (confirmed by dumping the live NSView tree:
-            // the same Slider measured ~253pt wide starting at x≈217 in a
-            // 480pt-wide row when placed in the body, vs. ~460pt wide
-            // starting at x≈30 when placed here). A Section's footer is
-            // rendered as plain full-width content below that grid, not as a
-            // grid row, so it never gets pulled into the label/control
-            // layout - which is why moving this block here (rather than
-            // tweaking the Slider itself yet again) actually fixes the width
-            // and alignment, and also guarantees the three rows below line
-            // up with each other since they're now plain VStack siblings
-            // sharing one container instead of being split across the grid.
+            // A grouped Form lays Section body rows out on a shared label/control
+            // grid that clamps a bare Slider; the footer is plain full-width content.
             if draftMode != .itemCount {
                 VStack(alignment: .leading, spacing: 9) {
                     HStack {
                         Text("Remove clips older than")
                         Spacer()
-                        Text(draftPreset.title)
+                        Text(sliderPreset.title)
                             .fontWeight(.semibold)
                             .foregroundStyle(Color.accentColor)
                     }
-                    Slider(value: draftPresetSliderValue,
+                    Slider(value: $sliderValue,
                            in: 0...Double(HistoryRetentionPreset.allCases.count - 1),
-                           step: 1)
+                           step: 1,
+                           onEditingChanged: { editing in
+                               sliderEditing = editing
+                               if !editing { applySliderValue() }
+                           })
                     HStack(spacing: 0) {
                         ForEach(HistoryRetentionPreset.allCases) { preset in
                             Text(preset.shortTitle)
-                                .font(.system(size: 10, weight: preset == draftPreset ? .bold : .medium))
-                                .foregroundStyle(preset == draftPreset ? Color.accentColor : .secondary)
+                                .font(.system(size: 10, weight: preset == sliderPreset ? .bold : .medium))
+                                .foregroundStyle(preset == sliderPreset ? Color.accentColor : .secondary)
                                 .frame(maxWidth: .infinity)
                         }
                     }
@@ -360,6 +340,7 @@ private struct HistoryRetentionSettings: View {
         .onChange(of: draftMode) { evaluateDraft() }
         .onChange(of: draftLimit) { evaluateDraft() }
         .onChange(of: draftDays) { evaluateDraft() }
+        .onChange(of: sliderValue) { if !sliderEditing { applySliderValue() } }
         .alert("Remove \(pendingRemovalCount) Clips?", isPresented: $confirmingChange) {
             Button("Remove \(pendingRemovalCount) Clips", role: .destructive) { commit() }
             Button("Cancel", role: .cancel) { revert() }
@@ -398,6 +379,12 @@ private struct HistoryRetentionSettings: View {
         draftMode = settings.historyRetentionMode
         draftLimit = settings.historyLimit
         draftDays = settings.historyRetentionDays
+        sliderValue = HistoryRetentionPreset(nearestDays: draftDays).sliderIndex
+    }
+
+    private func applySliderValue() {
+        let days = HistoryRetentionPreset(sliderIndex: sliderValue).days
+        if days != draftDays { draftDays = days }
     }
 }
 
