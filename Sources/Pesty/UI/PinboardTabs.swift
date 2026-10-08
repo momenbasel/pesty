@@ -19,6 +19,9 @@ struct PinboardTabs: View {
                          selected: store.source == .pinboard(board.id)) {
                         store.source = .pinboard(board.id); store.selectFirst()
                     }
+                    // Rename lived only in the context menu, which nobody found (#100).
+                    .simultaneousGesture(TapGesture(count: 2).onEnded { rename(board) })
+                    .help("Double-click or right-click to rename")
                     .contextMenu {
                         Button("Rename…") { rename(board) }
                         Button("Delete Pinboard", role: .destructive) {
