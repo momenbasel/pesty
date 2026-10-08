@@ -17,6 +17,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var previewWindow: NSWindow?
     private var previewedItemID: UUID?
     private var keyMonitor: Any?
+    private let barHeightGhost = BarHeightGhostController()
 
     private(set) var previousApp: NSRunningApplication?
     private(set) var lastActiveApp: NSRunningApplication?
@@ -237,6 +238,41 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         ClipboardStore.shared.setICloudSync(enabling)
     }
 
+    func updateConfiguredBarHeight() {
+        barController?.applyConfiguredBarHeight()
+    }
+
+    /// Feedback for the Settings height slider: resize the real bar when it is
+    /// up, and otherwise outline the proposed size where the bar would appear.
+    func previewBarHeight(_ height: Double) {
+        if barController?.isPresented == true {
+            barHeightGhost.hide()
+            updateConfiguredBarHeight()
+        } else {
+            barHeightGhost.show(height: height)
+        }
+    }
+
+    func beginBarResize(at screenPoint: NSPoint) {
+        barController?.beginBarResize(at: screenPoint)
+    }
+
+    func updateBarResize(at screenPoint: NSPoint) {
+        barController?.updateBarResize(at: screenPoint)
+    }
+
+    func endBarResize(at screenPoint: NSPoint) {
+        barController?.endBarResize(at: screenPoint)
+    }
+
+    func cancelBarResize() {
+        barController?.cancelBarResize()
+    }
+
+    func adjustBarHeight(by delta: CGFloat) {
+        barController?.adjustBarHeight(by: delta)
+    }
+
     static func restart() {
         let path = Bundle.main.bundlePath
         let task = Process()
@@ -295,6 +331,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if barController == nil || barController?.window == nil {
             barController = BarWindowController()
         }
+        // The real bar supersedes any height outline still lingering.
+        barHeightGhost.hide()
         barController?.show()
         startKeyMonitor()
     }
@@ -545,7 +583,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Events belonging to a native context menu, editor, alert, or the
         // Settings window must stay with their own responder chain. The bar
         // monitor is only responsible for keys delivered to the panel itself.
-        guard event.window === barController?.window else { return event }
+        guard let barWindow = barController?.window,
+              event.window === barWindow else { return event }
+
+        if barWindow.firstResponder is BarResizeHandleResponder { return event }
 
         if handleBarCommandShortcut(event) { return nil }
 

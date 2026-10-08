@@ -141,6 +141,7 @@ private struct GeneralSettings: View {
                     LabeledContent("Bar height", value: "\(Int(settings.barHeight)) px")
                     Slider(value: $settings.barHeight, in: 300...720, step: 10)
                 }
+                Toggle("Show resize handle on the Paste Bar", isOn: $settings.showBarResizeHandle)
                 #if MAS
                 Text("Select a clip to copy it, then press ⌘V to paste it into your app.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -250,6 +251,9 @@ private struct GeneralSettings: View {
             }
         }
         .formStyle(.grouped)
+        .onChange(of: settings.barHeight) { _, height in
+            AppController.shared.previewBarHeight(height)
+        }
         #if !MAS
         .onAppear { accessibilityGranted = AXIsProcessTrusted() }
         .onReceive(poll) { _ in

@@ -34,6 +34,8 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
     private var phase: Phase = .hidden
     private var epoch = 0
     private let searchBridge = BarSearchFieldBridge()
+    private var targetVisibleFrame: NSRect?
+    private var resizeSession: BarResizeSession?
 
     /// True while the bar is up or on its way up. `AppController.toggleBar` asks this
     /// instead of `window.isVisible`.
@@ -146,8 +148,13 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
         guard let screen = Self.targetScreen() else { return }
         panel.level = Settings.shared.hideOnClickOutside ? .modalPanel : .floating
         let vf = screen.visibleFrame
-        let height = min(CGFloat(Settings.shared.barHeight), vf.height)
-        let onScreen = NSRect(x: vf.minX, y: vf.minY, width: vf.width, height: height)
+        let onScreen = BarResizeGeometry.panelFrame(
+            for: Settings.shared.barHeight,
+            in: vf
+        )
+        let height = onScreen.height
+        targetVisibleFrame = vf
+        resizeSession = nil
 
         // The panel stays parked at its final frame and the content slides up *inside*
         // it. Animating the window frame itself is not safe on multi-display setups:
@@ -185,8 +192,10 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = Self.showDuration
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            content.animator().frame = NSRect(x: 0, y: -bottomExtension,
-                                              width: onScreen.width, height: contentHeight)
+            content.animator().frame = BarResizeGeometry.presentedContentFrame(
+                panelSize: onScreen.size,
+                bottomExtension: bottomExtension
+            )
         }, completionHandler: { DispatchQueue.main.async(execute: finish) })
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.showDuration + 0.05, execute: finish)
     }
@@ -194,6 +203,7 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
     func hide() {
         guard let panel = window, let content = panel.contentView else { return }
         guard isPresented else { return }
+        cancelBarResize()
 
         let token = beginTransition()
         phase = .hiding(token)
@@ -219,6 +229,7 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
     /// Used after sleep or a display change, where an in-flight transition can be
     /// left stranded on a screen that no longer exists.
     func forceHide() {
+        resizeSession = nil
         _ = beginTransition()
         phase = .hidden
         window?.orderOut(nil)
@@ -235,6 +246,69 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
 
     func resignSearch() {
         searchBridge.resign()
+    }
+
+    func beginBarResize(at screenPoint: NSPoint) {
+        guard phase == .shown,
+              resizeSession == nil,
+              let panel = window,
+              let visibleFrame = targetVisibleFrame else { return }
+        resizeSession = BarResizeSession(
+            initialPanelHeight: panel.frame.height,
+            initialScreenY: screenPoint.y,
+            visibleFrame: visibleFrame
+        )
+    }
+
+    func updateBarResize(at screenPoint: NSPoint) {
+        guard phase == .shown, let resizeSession else { return }
+        applyResizeFrame(resizeSession.frame(atScreenY: screenPoint.y))
+    }
+
+    func endBarResize(at screenPoint: NSPoint) {
+        guard phase == .shown, let resizeSession else { return }
+        let frame = resizeSession.frame(atScreenY: screenPoint.y)
+        let persistedHeight = resizeSession.finalPersistedHeight(atScreenY: screenPoint.y)
+        self.resizeSession = nil
+        applyResizeFrame(frame)
+        Settings.shared.barHeight = persistedHeight
+    }
+
+    func cancelBarResize() {
+        guard let resizeSession else { return }
+        self.resizeSession = nil
+        guard phase == .shown else { return }
+        applyResizeFrame(resizeSession.cancelledFrame)
+    }
+
+    func adjustBarHeight(by delta: CGFloat) {
+        guard phase == .shown,
+              resizeSession == nil,
+              let panel = window,
+              let visibleFrame = targetVisibleFrame else { return }
+        let requested = Double(panel.frame.height + delta)
+        let frame = BarResizeGeometry.panelFrame(for: requested, in: visibleFrame)
+        applyResizeFrame(frame)
+        Settings.shared.barHeight = Double(frame.height)
+    }
+
+    func applyConfiguredBarHeight() {
+        guard phase == .shown, resizeSession == nil,
+              let visibleFrame = targetVisibleFrame else { return }
+        applyResizeFrame(BarResizeGeometry.panelFrame(
+            for: Settings.shared.barHeight,
+            in: visibleFrame
+        ))
+    }
+
+    private func applyResizeFrame(_ frame: NSRect) {
+        guard let panel = window, let content = panel.contentView,
+              frame.width > 0, frame.height > 0 else { return }
+        panel.setFrame(frame, display: true)
+        content.frame = BarResizeGeometry.presentedContentFrame(
+            panelSize: frame.size,
+            bottomExtension: Self.contentBottomExtension
+        )
     }
 
     func windowDidResignKey(_ notification: Notification) {
