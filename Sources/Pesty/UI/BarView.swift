@@ -1,8 +1,20 @@
 import SwiftUI
 
 struct BarView: View {
+    let searchBridge: BarSearchFieldBridge
     @Bindable private var store = ClipboardStore.shared
     @Bindable private var settings = Settings.shared
+
+    private var searchIsActive: Bool {
+        store.barInputMode == .search || !store.searchText.isEmpty
+    }
+
+    private var searchTextBinding: Binding<String> {
+        Binding(
+            get: { store.searchText },
+            set: { AppController.shared.updateBarSearchText($0) }
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -12,6 +24,17 @@ struct BarView: View {
             VStack(spacing: 0) {
                 topBar
                 strip
+            }
+        }
+        .overlay(alignment: .top) {
+            if settings.showBarResizeHandle {
+                BarResizeHandle(
+                    accessibilityValue: CGFloat(settings.barHeight),
+                    onBegin: AppController.shared.beginBarResize,
+                    onChange: AppController.shared.updateBarResize,
+                    onEnd: AppController.shared.endBarResize,
+                    onCancel: AppController.shared.cancelBarResize,
+                    onAccessibilityAdjustment: AppController.shared.adjustBarHeight)
             }
         }
         .clipShape(RoundedCorners(radius: Theme.cornerRadius, corners: [.topLeft, .topRight]))
@@ -45,6 +68,9 @@ struct BarView: View {
             if store.multiSelectedIDs.count > 1 {
                 bulkDeleteButton
             }
+            if store.hasUndoableDeletion {
+                undoButton
+            }
             moreMenu
         }
         .padding(.horizontal, 18)
@@ -64,17 +90,36 @@ struct BarView: View {
     }
 
     private var searchIndicator: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: searchIsActive ? 6 : 0) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(store.searchText.isEmpty ? Theme.chromeTextSecondary : Theme.chromeTextPrimary)
-            if !store.searchText.isEmpty {
-                Text(store.searchText)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Theme.chromeTextPrimary)
-                    .lineLimit(1)
-                    .truncationMode(.head)
-                Button { store.searchText = ""; store.selectFirst() } label: {
+                .foregroundStyle(searchIsActive ? Theme.chromeTextPrimary : Theme.chromeTextSecondary)
+                .accessibilityHidden(true)
+
+            // Kept mounted even in the compact state: the key monitor can
+            // focus it synchronously and return the same first key event, so
+            // type-anywhere search never loses a character.
+            NativeBarSearchField(
+                text: searchTextBinding,
+                bridge: searchBridge,
+                onBegin: { AppController.shared.setBarSearchEditing(true) },
+                onEnd: { AppController.shared.setBarSearchEditing(false) },
+                onSubmit: { AppController.shared.pasteSelected() },
+                onCancel: { AppController.shared.cancelBarSearchOrHide() },
+                onMoveSelection: { store.moveSelection(by: $0) }
+            )
+            .frame(minWidth: searchIsActive ? 120 : 0,
+                   idealWidth: searchIsActive ? 180 : 0,
+                   maxWidth: searchIsActive ? 260 : 0,
+                   alignment: .leading)
+            .opacity(searchIsActive ? 1 : 0)
+            .allowsHitTesting(searchIsActive)
+            .accessibilityHidden(!searchIsActive)
+
+            if searchIsActive {
+                Button {
+                    AppController.shared.clearBarSearch()
+                } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 12)).foregroundStyle(Theme.chromeTextTertiary)
                 }
@@ -82,11 +127,15 @@ struct BarView: View {
                 .accessibilityLabel("Clear search")
             }
         }
-        .padding(.horizontal, store.searchText.isEmpty ? 0 : 10)
-        .frame(minWidth: 22, maxWidth: 700, minHeight: 30, maxHeight: 30, alignment: .leading)
-        .fixedSize(horizontal: true, vertical: false)
-        .background(store.searchText.isEmpty ? Color.clear : Theme.fieldBG, in: Capsule())
-        .animation(.easeOut(duration: 0.15), value: store.searchText.isEmpty)
+        .padding(.horizontal, searchIsActive ? 10 : 0)
+        .frame(height: 30)
+        .background(searchIsActive ? Theme.fieldBG : Color.clear, in: Capsule())
+        // Without this, the search field competes for space with the
+        // Pinboard tabs' ScrollView in the same HStack and can get squeezed
+        // below its intended width — an active query needs to keep its
+        // requested width over the (infinitely flexible) tab strip.
+        .layoutPriority(searchIsActive ? 2 : 0)
+        .animation(.easeOut(duration: 0.15), value: searchIsActive)
     }
 
     private var bulkDeleteButton: some View {
@@ -103,6 +152,21 @@ struct BarView: View {
         .fixedSize()
         .help("Delete \(count) selected clips (⌘⌫)")
         .accessibilityLabel("Delete \(count) selected clips")
+    }
+
+    private var undoButton: some View {
+        Button {
+            store.undoLastDelete()
+        } label: {
+            Label("Undo", systemImage: "arrow.uturn.backward")
+                .font(.system(size: 12.5, weight: .medium))
+                .lineLimit(1)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .fixedSize()
+        .help("Undo the last deletion (⌘Z), available for 5 minutes")
+        .accessibilityLabel("Undo last deletion")
     }
 
     private var moreMenu: some View {
@@ -166,13 +230,23 @@ struct BarView: View {
             }
             .onChange(of: store.selectedID) { _, id in
                 guard let id else { return }
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
-                    proxy.scrollTo(id, anchor: .center)
-                }
+                scrollToSelected(id, proxy: proxy)
+            }
+            .onChange(of: settings.selectedClipPosition) { _, _ in
+                guard let id = store.selectedID else { return }
+                scrollToSelected(id, proxy: proxy)
             }
             .overlay { if store.visibleItems.isEmpty { emptyState } }
         }
         .frame(maxHeight: .infinity)
+    }
+
+    /// The anchor preference decides whether the strip parks the selected
+    /// card centered or against the right edge, Paste-style.
+    private func scrollToSelected(_ id: UUID, proxy: ScrollViewProxy) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
+            proxy.scrollTo(id, anchor: settings.selectedClipPosition == .rightEdge ? .trailing : .center)
+        }
     }
 
     private var emptyState: some View {

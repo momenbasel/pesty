@@ -10,6 +10,15 @@ enum BarSource: Equatable {
     case pinboard(UUID)
 }
 
+/// Whether keyboard focus currently belongs to the native search field or
+/// to the clip strip. Lets the key monitor and the search field agree on
+/// who owns a given keystroke without probing AppKit's first-responder
+/// chain from every call site.
+enum BarInputMode: Equatable {
+    case cards
+    case search
+}
+
 @Observable
 @MainActor
 final class ClipboardStore {
@@ -18,9 +27,15 @@ final class ClipboardStore {
     private(set) var history: [ClipItem] = []
     private(set) var pinboards: [Pinboard] = []
 
+    private var undoStack = ClipUndoStack()
+    /// True while a deletion can still be undone; drives the bar's Undo button.
+    private(set) var hasUndoableDeletion = false
+    private var undoExpirationWorkItem: DispatchWorkItem?
+
     var source: BarSource = .history {
         didSet { if source != oldValue { clearMultiSelection() } }
     }
+    var barInputMode: BarInputMode = .cards
     var searchText: String = "" {
         didSet { if searchText != oldValue { clearMultiSelection() } }
     }
@@ -65,6 +80,10 @@ final class ClipboardStore {
     }
 
     var iCloudAvailable: Bool { ClipboardStore.iCloudBase != nil }
+
+    /// The on-disk store root (history JSON plus saved images), exposed so
+    /// Settings can report how much space history actually uses.
+    var dataDirectory: URL { baseDir }
 
     private init() {
         let base = (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil) ?? ClipboardStore.localBase
@@ -123,6 +142,22 @@ final class ClipboardStore {
         scheduleSave()
     }
 
+    /// A Copy from the Paste Bar is an intentional use of an existing clip.
+    /// Promote it explicitly because the clipboard monitor correctly ignores
+    /// Pesty's own pasteboard writes, so a plain re-copy would otherwise leave
+    /// the clip sitting wherever it already was in history.
+    func promoteCopiedItem(_ item: ClipItem, at date: Date = .now) {
+        if history.contains(where: { $0.sameContent(as: item) }) {
+            var copied = item
+            copied.createdAt = date
+            addCaptured(copied)
+            return
+        }
+        // A Pinboard card with no history twin: history gets its own copy, as
+        // it would from any other app's copy, never the pinboard's UUID.
+        addCaptured(independentCopy(of: item, createdAt: date))
+    }
+
     func applyRetentionPolicy() { trimHistory(); scheduleSave() }
 
     func retentionRemovalCount(mode: HistoryRetentionMode, limit: Int, days: Int) -> Int {
@@ -130,7 +165,10 @@ final class ClipboardStore {
         case .itemCount:
             return max(0, history.count - max(20, limit))
         case .timeInterval:
-            let cutoff = Self.retentionCutoff(daysAgo: days)
+            // days == 0 means "forever" - no age-based cutoff, just the safety cap.
+            guard let cutoff = Self.retentionCutoff(daysAgo: days) else {
+                return max(0, history.count - Self.timeRetentionSafetyCap)
+            }
             let byAge = history.filter { $0.createdAt < cutoff }.count
             return byAge + max(0, (history.count - byAge) - Self.timeRetentionSafetyCap)
         }
@@ -138,8 +176,9 @@ final class ClipboardStore {
 
     private static let timeRetentionSafetyCap = 5000
 
-    private static func retentionCutoff(daysAgo days: Int) -> Date {
-        Date().addingTimeInterval(-TimeInterval(max(1, days)) * 86_400)
+    private static func retentionCutoff(daysAgo days: Int) -> Date? {
+        guard days > 0 else { return nil }
+        return Date().addingTimeInterval(-TimeInterval(days) * 86_400)
     }
 
     private(set) var retentionPrunedRecordNames: Set<String> = []
@@ -157,11 +196,13 @@ final class ClipboardStore {
                 history.removeLast(history.count - historyLimit)
             }
         case .timeInterval:
-            let cutoff = Self.retentionCutoff(daysAgo: Settings.shared.historyRetentionDays)
-            let old = history.filter { $0.createdAt < cutoff }
-            if !old.isEmpty {
-                removed += old
-                history.removeAll { $0.createdAt < cutoff }
+            // days == 0 means "forever" - skip the age cutoff, keep the safety cap.
+            if let cutoff = Self.retentionCutoff(daysAgo: Settings.shared.historyRetentionDays) {
+                let old = history.filter { $0.createdAt < cutoff }
+                if !old.isEmpty {
+                    removed += old
+                    history.removeAll { $0.createdAt < cutoff }
+                }
             }
             if history.count > Self.timeRetentionSafetyCap {
                 removed += Array(history[Self.timeRetentionSafetyCap...])
@@ -190,26 +231,35 @@ final class ClipboardStore {
     /// Deleting exactly what was removed also closes an image-file leak: the
     /// old cross-container removal deleted entries under two file names but
     /// cleaned up only one of them.
-    func delete(_ item: ClipItem) { delete(items: [item]) }
+    func delete(_ item: ClipItem, permanently: Bool = false) {
+        delete(items: [item], permanently: permanently)
+    }
 
-    func delete(items: [ClipItem]) {
+    /// A deletion stays undoable for five minutes unless `permanently` is
+    /// set for this one (Option was held) or the setting says so for all.
+    func delete(items: [ClipItem], permanently: Bool = false) {
         let ids = Set(items.map(\.id))
         guard !ids.isEmpty else { return }
         // Captured before removal so repeated deletes walk down the list
         // instead of snapping back to the newest clip every time.
         let deletedIndex = visibleItems.firstIndex(where: { ids.contains($0.id) })
         let selectionDeleted = selectedID.map { ids.contains($0) } ?? false
-        let removed: [ClipItem]
+        let placements: [ClipPlacement]
         switch source {
         case .history:
-            removed = history.filter { ids.contains($0.id) }
+            placements = Self.placements(of: ids, in: history, container: .history)
             history.removeAll { ids.contains($0.id) }
         case .pinboard(let boardID):
             guard let boardIndex = pinboards.firstIndex(where: { $0.id == boardID }) else { return }
-            removed = pinboards[boardIndex].items.filter { ids.contains($0.id) }
+            placements = Self.placements(of: ids, in: pinboards[boardIndex].items, container: source)
             pinboards[boardIndex].items.removeAll { ids.contains($0.id) }
         }
-        for entry in removed { deleteImageFile(entry) }
+        if permanently || Settings.shared.deletePermanently {
+            for placement in placements { deleteImageFile(placement.item) }
+        } else {
+            undoStack.push(placements, at: Date())
+            refreshUndoState()
+        }
         multiSelectedIDs.subtract(ids)
         if multiSelectedIDs.count <= 1 { multiSelectedIDs = [] }
         if selectionDeleted {
@@ -229,9 +279,92 @@ final class ClipboardStore {
         let old = history
         history.removeAll()
         selectedID = nil
+        forgetDeletions()
         for item in old { deleteImageFile(item) }
         reconcileMultiSelection()
         scheduleSave()
+    }
+
+    private static func placements(of ids: Set<UUID>, in items: [ClipItem],
+                                   container: BarSource) -> [ClipPlacement] {
+        items.indices.compactMap { index in
+            guard ids.contains(items[index].id) else { return nil }
+            return ClipPlacement(container: container,
+                                 index: index,
+                                 item: items[index],
+                                 predecessorID: index > 0 ? items[index - 1].id : nil,
+                                 successorID: index + 1 < items.count ? items[index + 1].id : nil)
+        }
+    }
+
+    /// Puts the newest deletion back where it was, every clip of a bulk
+    /// delete at once, while its five-minute window is open.
+    @discardableResult
+    func undoLastDelete() -> Bool {
+        refreshUndoState()
+        guard let deletion = undoStack.pop(at: Date()) else { return false }
+        var restored: [UUID] = []
+        for placement in deletion.placements.sorted(by: { $0.index < $1.index }) {
+            switch placement.container {
+            case .history:
+                if restore(placement, into: &history) { restored.append(placement.item.id) }
+            case .pinboard(let boardID):
+                guard let i = pinboards.firstIndex(where: { $0.id == boardID }) else {
+                    deleteImageFile(placement.item)
+                    continue
+                }
+                if restore(placement, into: &pinboards[i].items) { restored.append(placement.item.id) }
+            }
+        }
+        refreshUndoState()
+        if let id = restored.first(where: { id in visibleItems.contains(where: { $0.id == id }) }) {
+            selectedID = id
+            selectionAnchorID = id
+        }
+        reconcileMultiSelection()
+        scheduleSave()
+        return true
+    }
+
+    /// A clip that came back by other means in the meantime (copied again,
+    /// or synced in) is left as it is rather than doubled.
+    private func restore(_ placement: ClipPlacement, into items: inout [ClipItem]) -> Bool {
+        let item = placement.item
+        if items.contains(where: { $0.id == item.id || $0.sameContent(as: item) }) {
+            deleteImageFile(item)
+            return false
+        }
+        items.insert(item, at: placement.restorationIndex(in: items))
+        return true
+    }
+
+    /// Drops deletions whose window has closed, releasing the image files
+    /// they kept, and arms a timer for the next one so the Undo button
+    /// retires on time.
+    private func refreshUndoState() {
+        let now = Date()
+        for deletion in undoStack.removeExpired(at: now) {
+            for placement in deletion.placements { deleteImageFile(placement.item) }
+        }
+        hasUndoableDeletion = !undoStack.isEmpty
+        undoExpirationWorkItem?.cancel()
+        undoExpirationWorkItem = nil
+        guard let expiration = undoStack.nextExpiration else { return }
+        let work = DispatchWorkItem { [weak self] in self?.refreshUndoState() }
+        undoExpirationWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + max(0, expiration.timeIntervalSince(now)),
+                                      execute: work)
+    }
+
+    /// Clear History and removing a Pinboard are the moments deleted content
+    /// is expected to be gone for good, so nothing stays restorable. Quitting
+    /// forgets as well, since the stack does not outlive the process and the
+    /// image files it kept would otherwise be orphaned.
+    func forgetDeletions() {
+        for deletion in undoStack.removeAll() {
+            for placement in deletion.placements { deleteImageFile(placement.item) }
+        }
+        refreshUndoState()
     }
 
     @discardableResult
@@ -253,6 +386,7 @@ final class ClipboardStore {
         if case .pinboard(let cur) = source, cur == id { source = .history }
         let removedItems = pinboards[i].items
         pinboards.remove(at: i)
+        forgetDeletions()
         for item in removedItems { deleteImageFile(item) }
         reconcileMultiSelection()
         scheduleSave()
@@ -261,11 +395,18 @@ final class ClipboardStore {
     func saveToPinboard(_ item: ClipItem, boardID: UUID) {
         guard let i = pinboards.firstIndex(where: { $0.id == boardID }) else { return }
         if pinboards[i].items.contains(where: { $0.sameContent(as: item) }) { return }
-        // Pinboard copies mint their own UUID (one sync record per container).
+        pinboards[i].items.insert(independentCopy(of: item, createdAt: item.createdAt), at: 0)
+        scheduleSave()
+    }
+
+    /// A copy with its own UUID and its own image file, so no two containers
+    /// ever share an identity (one sync record per container) or a file.
+    private func independentCopy(of item: ClipItem, createdAt: Date) -> ClipItem {
         var copy = ClipItem(
             type: item.type,
             text: item.text,
             rtfData: item.rtfData,
+            htmlData: item.htmlData,
             imageFileName: item.imageFileName,
             imageHash: item.imageHash,
             fileURLs: item.fileURLs,
@@ -273,10 +414,9 @@ final class ClipboardStore {
             sourceBundleID: item.sourceBundleID,
             sourceAppName: item.sourceAppName,
             customTitle: item.customTitle,
-            createdAt: item.createdAt)
+            createdAt: createdAt)
         if let dup = duplicateImageFile(item) { copy.imageFileName = dup }
-        pinboards[i].items.insert(copy, at: 0)
-        scheduleSave()
+        return copy
     }
 
     func item(withID id: UUID) -> ClipItem? {
@@ -294,6 +434,7 @@ final class ClipboardStore {
             updated.type = type
             updated.text = text
             updated.rtfData = richTextData
+            updated.htmlData = nil
             updated.colorHex = nil
             return updated
         }
@@ -308,6 +449,7 @@ final class ClipboardStore {
             updated.type = .color
             updated.text = nil
             updated.rtfData = nil
+            updated.htmlData = nil
             updated.colorHex = normalized
             return updated
         }
@@ -500,6 +642,7 @@ final class ClipboardStore {
         guard let name = item.imageFileName else { return }
         let stillUsed = history.contains { $0.imageFileName == name }
             || pinboards.contains { $0.items.contains { $0.imageFileName == name } }
+            || undoStack.retainsImageFile(named: name)
         if stillUsed { return }
         if let url = imageURL(for: item) { try? FileManager.default.removeItem(at: url) }
     }

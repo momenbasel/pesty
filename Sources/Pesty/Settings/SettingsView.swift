@@ -132,18 +132,64 @@ private struct GeneralSettings: View {
                 Toggle("Paste directly into the active app", isOn: $settings.pasteDirectly)
                 #endif
                 Toggle("Ignore passwords (concealed clips)", isOn: $settings.ignoreConcealed)
+                Toggle("Promote pasted clips to the top of history", isOn: $settings.promoteOnPaste)
                 Toggle("Play sound on paste", isOn: $settings.playSound)
+                Toggle("Play sound when copying from Pesty", isOn: $settings.playSoundOnCopy)
                 Toggle("Hide Pesty when clicking outside", isOn: $settings.hideOnClickOutside)
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
                 Toggle("Show Pesty in the menu bar", isOn: $settings.showMenuBarIcon)
                 VStack(alignment: .leading) {
-                    LabeledContent("Bar height", value: "\(Int(settings.barHeight)) px")
+                    LabeledContent("Bar height", value: "\(Int(settings.barHeight)) pt")
                     Slider(value: $settings.barHeight, in: 300...720, step: 10)
                 }
+                Toggle("Show resize handle on the Paste Bar", isOn: $settings.showBarResizeHandle)
                 #if MAS
                 Text("Select a clip to copy it, then press ⌘V to paste it into your app.")
                     .font(.caption).foregroundStyle(.secondary)
                 #endif
+            }
+
+            Section("Clip Colors") {
+                Picker("Color theme", selection: $settings.clipColorTheme) {
+                    ForEach(ClipColorTheme.allCases) { theme in
+                        Text(theme.title).tag(theme)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(settings.clipColorTheme.detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if settings.clipColorTheme == .accentShades {
+                    ColorPicker("Base color", selection: clipColorAccent, supportsOpacity: false)
+                    HStack(spacing: 12) {
+                        Text("Preview")
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 4) {
+                            ForEach(Array(SourceColor.accentShades(for: settings.clipColorAccentHex).enumerated()),
+                                    id: \.offset) { _, color in
+                                Circle()
+                                    .fill(color)
+                                    .frame(width: 13, height: 13)
+                            }
+                        }
+                        .accessibilityLabel("Ten stable shades of the selected base color")
+                    }
+                    Text("Each source app keeps one of ten deterministic shades, so its cards stay recognizable without drifting too far from your chosen color.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Section("Clip Navigation") {
+                Picker("Selected clip position", selection: $settings.selectedClipPosition) {
+                    ForEach(SelectedClipPosition.allCases) { position in
+                        Text(position.title).tag(position)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(settings.selectedClipPosition.detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             #if MAS
@@ -200,6 +246,10 @@ private struct GeneralSettings: View {
             #endif
 
             Section("Data") {
+                Toggle("Delete permanently", isOn: $settings.deletePermanently)
+                Text("Skips the five-minute Undo window: deleted clips are removed at once and cannot be recovered. Hold Option while deleting to skip Undo for one deletion, whatever this setting says.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Button("Clear Clipboard History", role: .destructive) {
                     ClipboardStore.shared.clearHistory()
                 }
@@ -223,6 +273,13 @@ private struct GeneralSettings: View {
     }
     #endif
 
+    private var clipColorAccent: Binding<Color> {
+        Binding(
+            get: { Color(hex: settings.clipColorAccentHex) ?? .pink },
+            set: { settings.clipColorAccentHex = NSColor($0).hexString }
+        )
+    }
+
     private func modifierPicker(selection: Binding<Int>) -> some View {
         Picker("", selection: selection) {
             ForEach(ShortcutModifier.allCases) { modifier in
@@ -242,14 +299,45 @@ private struct HistoryRetentionSettings: View {
     @State private var draftDays = Settings.shared.historyRetentionDays
     @State private var pendingRemovalCount = 0
     @State private var confirmingChange = false
+    @State private var storageBytes: Int64?
 
-    private static let dayChoices: [(days: Int, label: String)] = [
-        (1, "1 Day"), (7, "1 Week"), (14, "2 Weeks"), (30, "1 Month"),
-        (90, "3 Months"), (180, "6 Months"), (365, "1 Year")
-    ]
+    @State private var sliderValue = HistoryRetentionPreset(nearestDays: Settings.shared.historyRetentionDays).sliderIndex
+    @State private var sliderEditing = false
+
+    private var sliderPreset: HistoryRetentionPreset { HistoryRetentionPreset(sliderIndex: sliderValue) }
+
+    private var storageSummary: String {
+        let store = ClipboardStore.shared
+        let count = store.history.count + store.pinboards.reduce(0) { $0 + $1.items.count }
+        let clips = "\(count) clip\(count == 1 ? "" : "s")"
+        guard let storageBytes else { return clips }
+        return "\(clips) · \(ByteCountFormatter.string(fromByteCount: storageBytes, countStyle: .file))"
+    }
+
+    private func refreshStorageSize() async {
+        let dir = ClipboardStore.shared.dataDirectory
+        storageBytes = await Task.detached(priority: .utility) {
+            Self.directorySize(at: dir)
+        }.value
+    }
+
+    /// Walks the store directory off the main actor; images can make it
+    /// large enough that a synchronous walk would hitch the Settings window.
+    nonisolated private static func directorySize(at url: URL) -> Int64 {
+        let keys: Set<URLResourceKey> = [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey, .isRegularFileKey]
+        guard let enumerator = FileManager.default.enumerator(at: url,
+                                                              includingPropertiesForKeys: Array(keys)) else { return 0 }
+        var total: Int64 = 0
+        for case let file as URL in enumerator {
+            guard let values = try? file.resourceValues(forKeys: keys),
+                  values.isRegularFile == true else { continue }
+            total += Int64(values.totalFileAllocatedSize ?? values.fileAllocatedSize ?? 0)
+        }
+        return total
+    }
 
     var body: some View {
-        Section("History") {
+        Section {
             Picker("Limit history by", selection: $draftMode) {
                 ForEach(HistoryRetentionMode.allCases) { mode in
                     Text(mode.title).tag(mode)
@@ -260,20 +348,55 @@ private struct HistoryRetentionSettings: View {
                 Stepper(value: $draftLimit, in: 50...5000, step: 50) {
                     LabeledContent("Keep at most", value: "\(draftLimit) clips")
                 }
-            } else {
-                Picker("Remove clips older than", selection: $draftDays) {
-                    ForEach(Self.dayChoices, id: \.days) { choice in
-                        Text(choice.label).tag(choice.days)
+            }
+        } header: {
+            Text("History")
+        } footer: {
+            // A grouped Form lays Section body rows out on a shared label/control
+            // grid that clamps a bare Slider; the footer is plain full-width content.
+            if draftMode != .itemCount {
+                VStack(alignment: .leading, spacing: 9) {
+                    HStack {
+                        Text("Remove clips older than")
+                        Spacer()
+                        Text(sliderPreset.title)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    Slider(value: $sliderValue,
+                           in: 0...Double(HistoryRetentionPreset.allCases.count - 1),
+                           step: 1,
+                           onEditingChanged: { editing in
+                               sliderEditing = editing
+                               if !editing { applySliderValue() }
+                           })
+                    HStack(spacing: 0) {
+                        ForEach(HistoryRetentionPreset.allCases) { preset in
+                            Text(preset.shortTitle)
+                                .font(.system(size: 10, weight: preset == sliderPreset ? .bold : .medium))
+                                .foregroundStyle(preset == sliderPreset ? Color.accentColor : .secondary)
+                                .frame(maxWidth: .infinity)
+                        }
                     }
                 }
+                .padding(.vertical, 2)
             }
             Text(footnote)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .padding(.top, draftMode == .itemCount ? 0 : 4)
+            LabeledContent("History and pinboards on disk", value: storageSummary)
+        }
+        .task {
+            await refreshStorageSize()
+            for await _ in NotificationCenter.default.notifications(named: .pestyStoreDidSave) {
+                await refreshStorageSize()
+            }
         }
         .onChange(of: draftMode) { evaluateDraft() }
         .onChange(of: draftLimit) { evaluateDraft() }
         .onChange(of: draftDays) { evaluateDraft() }
+        .onChange(of: sliderValue) { if !sliderEditing { applySliderValue() } }
         .alert("Remove \(pendingRemovalCount) Clips?", isPresented: $confirmingChange) {
             Button("Remove \(pendingRemovalCount) Clips", role: .destructive) { commit() }
             Button("Cancel", role: .cancel) { revert() }
@@ -312,6 +435,12 @@ private struct HistoryRetentionSettings: View {
         draftMode = settings.historyRetentionMode
         draftLimit = settings.historyLimit
         draftDays = settings.historyRetentionDays
+        sliderValue = HistoryRetentionPreset(nearestDays: draftDays).sliderIndex
+    }
+
+    private func applySliderValue() {
+        let days = HistoryRetentionPreset(sliderIndex: sliderValue).days
+        if days != draftDays { draftDays = days }
     }
 }
 

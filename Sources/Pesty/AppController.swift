@@ -8,6 +8,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     let store = ClipboardStore.shared
     let monitor = ClipboardMonitor()
+    private let copyToast = CopyToastController()
 
     private var barController: BarWindowController?
     private var statusItem: NSStatusItem?
@@ -16,6 +17,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var previewWindow: NSWindow?
     private var previewedItemID: UUID?
     private var keyMonitor: Any?
+    #if !MAS
+    private var notedBlockedDirectPaste = false
+    #endif
 
     private(set) var previousApp: NSRunningApplication?
     private(set) var lastActiveApp: NSRunningApplication?
@@ -83,6 +87,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        store.forgetDeletions()
         store.saveNow()
     }
 
@@ -236,6 +241,26 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         ClipboardStore.shared.setICloudSync(enabling)
     }
 
+    func beginBarResize(at screenPoint: NSPoint) {
+        barController?.beginBarResize(at: screenPoint)
+    }
+
+    func updateBarResize(at screenPoint: NSPoint) {
+        barController?.updateBarResize(at: screenPoint)
+    }
+
+    func endBarResize(at screenPoint: NSPoint) {
+        barController?.endBarResize(at: screenPoint)
+    }
+
+    func cancelBarResize() {
+        barController?.cancelBarResize()
+    }
+
+    func adjustBarHeight(by delta: CGFloat) {
+        barController?.adjustBarHeight(by: delta)
+    }
+
     static func restart() {
         let path = Bundle.main.bundlePath
         let task = Process()
@@ -279,6 +304,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             previousApp = front
             lastActiveApp = front
         }
+        // The panel keeps its first responder across orderOut, so a field
+        // left focused by a hide mid-search would otherwise own the next
+        // presentation's keys: Return would not paste and arrows would move
+        // a caret in an empty query.
+        barController?.resignSearch()
+        store.barInputMode = .cards
         store.searchText = ""
         store.source = .history
         store.prepareForBarPresentation()
@@ -295,6 +326,38 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func hideBar() {
         stopKeyMonitor()
         barController?.hide()
+    }
+
+    func setBarSearchEditing(_ editing: Bool) {
+        let mode: BarInputMode = editing ? .search : .cards
+        guard store.barInputMode != mode else { return }
+        store.barInputMode = mode
+    }
+
+    /// Routes every edit from the native search field through here instead
+    /// of writing `store.searchText` directly, so the selection follows the
+    /// filtered results as you type instead of staying on whatever was
+    /// selected before the query changed.
+    func updateBarSearchText(_ text: String) {
+        guard store.searchText != text else { return }
+        store.searchText = text
+        store.selectFirst()
+    }
+
+    func clearBarSearch() {
+        let hadQuery = !store.searchText.isEmpty
+        barController?.resignSearch()
+        store.searchText = ""
+        store.barInputMode = .cards
+        if hadQuery { store.selectFirst(); searchClearedAt = Date() }
+    }
+
+    func cancelBarSearchOrHide() {
+        if !store.searchText.isEmpty {
+            clearBarSearch()
+        } else {
+            hideBar()
+        }
     }
 
     func pasteSelected() {
@@ -317,16 +380,47 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return app.bundleIdentifier == bundleID
     }
 
-    func pasteItem(_ item: ClipItem, asPlainText: Bool = false) {
+    func pasteItem(_ item: ClipItem, format: PasteFormat = .original) {
         let target = pasteTarget
         hideBar()
-        PasteService.paste(item, into: target, monitor: monitor, asPlainText: asPlainText)
+        let previousChange = NSPasteboard.general.changeCount
+        PasteService.paste(item, into: target, monitor: monitor, format: format)
+        if Settings.shared.promoteOnPaste, NSPasteboard.general.changeCount != previousChange {
+            store.promoteCopiedItem(item)
+        }
     }
 
+    #if !MAS
+    /// A direct paste that quietly falls back to a copy reads as "paste is
+    /// broken". Say so once per launch, in the toast rather than a modal:
+    /// the clip is on the pasteboard and Command-V finishes the job.
+    func noteBlockedDirectPaste() {
+        guard !notedBlockedDirectPaste else { return }
+        notedBlockedDirectPaste = true
+        copyToast.show(message: "Copied. Grant Accessibility in System Settings to paste directly.",
+                       symbol: "exclamationmark.triangle.fill",
+                       linger: 4)
+    }
+    #endif
+
     func copyItem(_ item: ClipItem) {
+        let previousChange = NSPasteboard.general.changeCount
         let change = PasteService.copy(item)
         monitor.suppressUntilChangeCount = change
+        // PasteService.copy leaves the pasteboard alone when an image file is
+        // missing; neither the promotion nor the toast should claim otherwise.
+        if change != previousChange {
+            store.promoteCopiedItem(item)
+            copyToast.show()
+        }
+        // Tink, not Pop: copy and paste stay audibly distinct.
+        if Settings.shared.playSoundOnCopy { NSSound(named: "Tink")?.play() }
         hideBar()
+    }
+
+    func copySelected() {
+        guard let item = store.selectedItem else { return }
+        copyItem(item)
     }
 
     var pasteMenuTitle: String {
@@ -405,28 +499,34 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    func deleteEffectiveSelection() {
+    /// `permanently` skips Undo for this one deletion: the user held Option.
+    func deleteEffectiveSelection(permanently: Bool = false) {
         let selection = store.effectiveSelectionIDs
         let targets = store.visibleItems.filter { selection.contains($0.id) }
         guard !targets.isEmpty else { return }
         if targets.count == 1 {
-            store.delete(targets[0])
+            store.delete(targets[0], permanently: permanently)
             return
         }
         suppressAutoHide = true
         defer { suppressAutoHide = false }
         let alert = NSAlert()
         alert.messageText = "Delete \(targets.count) Clips?"
+        let noUndo = permanently || Settings.shared.deletePermanently
         #if MAS
-        alert.informativeText = "There is no undo. When iCloud sync is on, these clips are also removed from your other devices."
+        alert.informativeText = noUndo
+            ? "This cannot be undone. When iCloud sync is on, these clips are also removed from your other devices."
+            : "You can undo this with ⌘Z for the next 5 minutes. When iCloud sync is on, these clips are also removed from your other devices."
         #else
-        alert.informativeText = "There is no undo."
+        alert.informativeText = noUndo
+            ? "This cannot be undone."
+            : "You can undo this with ⌘Z for the next 5 minutes."
         #endif
         let confirm = alert.addButton(withTitle: "Delete \(targets.count) Clips")
         confirm.hasDestructiveAction = true
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        store.delete(items: targets)
+        store.delete(items: targets, permanently: permanently)
     }
 
     func deleteSelection(containing item: ClipItem) {
@@ -492,7 +592,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Events belonging to a native context menu, editor, alert, or the
         // Settings window must stay with their own responder chain. The bar
         // monitor is only responsible for keys delivered to the panel itself.
-        guard event.window === barController?.window else { return event }
+        guard let barWindow = barController?.window,
+              event.window === barWindow else { return event }
+
+        if barWindow.firstResponder is BarResizeHandleResponder { return event }
 
         if handleBarCommandShortcut(event) { return nil }
 
@@ -508,9 +611,18 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if digit <= items.count {
                 let plain = includes(Settings.shared.plainTextModifier, in: flags)
                     && Settings.shared.plainTextModifier != Settings.shared.quickPasteModifier
-                pasteItem(items[digit - 1], asPlainText: plain)
+                pasteItem(items[digit - 1], format: plain ? .plainText : .original)
             }
             return nil
+        }
+
+        // Past the quick-paste digits, the native search field owns the event
+        // while it is editing: selection, clipboard commands, deletion, spaces,
+        // keyboard layouts, and composed text all need real AppKit
+        // text-editing behavior. Return and the arrows come back through the
+        // field's delegate.
+        if barController?.searchOwnsFirstResponder == true {
+            return event
         }
 
         switch code {
@@ -535,8 +647,17 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         case kVK_DownArrow:
             store.moveSelection(by: 1); return nil
         case kVK_Delete:
-            if cmd { deleteEffectiveSelection(); return nil }
+            if cmd { deleteEffectiveSelection(permanently: opt); return nil }
+            // Backspace edits the query before it can remove a filtered clip,
+            // even when focus has already moved back to the cards (e.g.
+            // after Return submitted the search). Refocusing the native
+            // field and returning the same event lets it handle the
+            // backspace itself, rather than manually mutating the string.
             if !store.searchText.isEmpty {
+                store.barInputMode = .search
+                if barController?.focusSearchAtEnd() == true {
+                    return event
+                }
                 store.searchText.removeLast(); store.selectFirst()
                 if store.searchText.isEmpty { searchClearedAt = Date() }
                 return nil
@@ -546,26 +667,38 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             // Backspace that just finished clearing a query must not start
             // deleting clips at the key-repeat rate - and a short cooldown
             // after the search empties separates "clear the query" from
-            // "delete a clip". There is no undo, and deletions replicate to
+            // "delete a clip". Command-Z brings a deleted clip back for five
+            // minutes unless Option was held, and deletions replicate to
             // other devices when sync is on.
             if !event.isARepeat,
                Date().timeIntervalSince(searchClearedAt) > Self.deleteAfterSearchClearCooldown {
-                deleteEffectiveSelection()
+                deleteEffectiveSelection(permanently: opt)
             }
             return nil
         case kVK_ForwardDelete:
-            deleteEffectiveSelection()
+            deleteEffectiveSelection(permanently: opt)
             return nil
+        case kVK_ANSI_Z:
+            if cmd, !ctrl, !opt, !flags.contains(.shift), store.undoLastDelete() { return nil }
+        case kVK_ANSI_C:
+            if cmd, !ctrl, !opt, !flags.contains(.shift) { copySelected(); return nil }
         default:
             break
         }
 
-        if !cmd && !ctrl && !opt,
-           let chars = event.characters, chars.count == 1,
-           let scalar = chars.unicodeScalars.first,
-           scalar.value >= 32, scalar.value != 127 {
-            store.searchText.append(chars)
-            store.selectFirst()
+        if isPrintableTextIntent(event) {
+            store.barInputMode = .search
+            if barController?.focusSearchAtEnd() == true {
+                // The local monitor runs before responder dispatch. Returning
+                // the same event now sends its very first character directly
+                // to the newly focused native field editor — no character is
+                // lost transferring focus mid-keystroke.
+                return event
+            }
+            if let chars = fallbackSearchCharacters(from: event) {
+                store.searchText.append(chars)
+                store.selectFirst()
+            }
             return nil
         }
         return event
@@ -582,6 +715,33 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let nextIndex = (currentIndex + delta % sources.count + sources.count) % sources.count
         store.source = sources[nextIndex]
         store.selectFirst()
+    }
+
+    private func isPrintableTextIntent(_ event: NSEvent) -> Bool {
+        let flags = event.modifierFlags
+        guard !flags.contains(.command),
+              !flags.contains(.control),
+              let chars = event.charactersIgnoringModifiers,
+              !chars.isEmpty else { return false }
+        return chars.unicodeScalars.contains {
+            $0.value >= 0x20
+                && $0.value != 0x7F
+                && !(0xF700...0xF8FF).contains($0.value)
+        }
+    }
+
+    private func fallbackSearchCharacters(from event: NSEvent) -> String? {
+        let flags = event.modifierFlags
+        guard !flags.contains(.command),
+              !flags.contains(.control),
+              let chars = event.characters,
+              !chars.isEmpty,
+              chars.unicodeScalars.allSatisfy({
+                  $0.value >= 0x20
+                      && $0.value != 0x7F
+                      && !(0xF700...0xF8FF).contains($0.value)
+              }) else { return nil }
+        return chars
     }
 
     private static func quickPasteDigit(for keyCode: Int) -> Int? {
