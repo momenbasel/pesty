@@ -524,9 +524,15 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return nil
         case kVK_Return, kVK_ANSI_KeypadEnter:
             pasteSelected(); return nil
-        case kVK_LeftArrow, kVK_UpArrow:
+        case kVK_LeftArrow:
+            if cmd { moveBarSection(by: -1) } else { store.moveSelection(by: -1) }
+            return nil
+        case kVK_RightArrow:
+            if cmd { moveBarSection(by: 1) } else { store.moveSelection(by: 1) }
+            return nil
+        case kVK_UpArrow:
             store.moveSelection(by: -1); return nil
-        case kVK_RightArrow, kVK_DownArrow:
+        case kVK_DownArrow:
             store.moveSelection(by: 1); return nil
         case kVK_Delete:
             if cmd { deleteEffectiveSelection(); return nil }
@@ -563,6 +569,19 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return nil
         }
         return event
+    }
+
+    /// Cycles the same sources, in the same order, that the tab bar presents.
+    /// The plus button is intentionally excluded: it creates a new pinboard
+    /// rather than representing a navigable section.
+    private func moveBarSection(by delta: Int) {
+        let sources: [BarSource] = [.history] + store.pinboards.map { .pinboard($0.id) }
+        guard !sources.isEmpty else { return }
+
+        let currentIndex = sources.firstIndex(of: store.source) ?? 0
+        let nextIndex = (currentIndex + delta % sources.count + sources.count) % sources.count
+        store.source = sources[nextIndex]
+        store.selectFirst()
     }
 
     private static func quickPasteDigit(for keyCode: Int) -> Int? {
