@@ -147,6 +147,37 @@ private struct GeneralSettings: View {
                 #endif
             }
 
+            Section("Clip Colors") {
+                Picker("Color theme", selection: $settings.clipColorTheme) {
+                    ForEach(ClipColorTheme.allCases) { theme in
+                        Text(theme.title).tag(theme)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(settings.clipColorTheme.detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if settings.clipColorTheme == .accentShades {
+                    ColorPicker("Base color", selection: clipColorAccent, supportsOpacity: false)
+                    HStack(spacing: 12) {
+                        Text("Preview")
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 4) {
+                            ForEach(Array(SourceColor.accentShades(for: settings.clipColorAccentHex).enumerated()),
+                                    id: \.offset) { _, color in
+                                Circle()
+                                    .fill(color)
+                                    .frame(width: 13, height: 13)
+                            }
+                        }
+                        .accessibilityLabel("Ten stable shades of the selected base color")
+                    }
+                    Text("Each source app keeps one of ten deterministic shades, so its cards stay recognizable without drifting too far from your chosen color.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Clip Navigation") {
                 Picker("Selected clip position", selection: $settings.selectedClipPosition) {
                     ForEach(SelectedClipPosition.allCases) { position in
@@ -235,6 +266,13 @@ private struct GeneralSettings: View {
         }
     }
     #endif
+
+    private var clipColorAccent: Binding<Color> {
+        Binding(
+            get: { Color(hex: settings.clipColorAccentHex) ?? .pink },
+            set: { settings.clipColorAccentHex = NSColor($0).hexString }
+        )
+    }
 
     private func modifierPicker(selection: Binding<Int>) -> some View {
         Picker("", selection: selection) {

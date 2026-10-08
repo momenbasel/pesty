@@ -138,6 +138,37 @@ enum HistoryRetentionPreset: Int, CaseIterable, Identifiable {
     }
 }
 
+enum ClipColorTheme: Int, CaseIterable, Identifiable {
+    // The stronger treatment is the default: side by side, the plain source
+    // color and its boosted version were close enough to be hard to tell
+    // apart, which made "Default" the wrong name for the quieter one.
+    // Classic keeps the unmodified color as the named alternative.
+    case `default`
+    case classic
+    case accentShades
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .default: "Default"
+        case .classic: "Classic"
+        case .accentShades: "Accent shades"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .default:
+            "Use a stronger, higher-contrast version of each source app color."
+        case .classic:
+            "Match each clip to its source app\u{2019}s familiar card color."
+        case .accentShades:
+            "Give each source app a stable lighter or darker shade of one color."
+        }
+    }
+}
+
 enum SelectedClipPosition: Int, CaseIterable, Identifiable {
     case center
     case rightEdge
@@ -187,6 +218,8 @@ final class Settings {
         static let onboarded = "onboarded"
         static let iCloudSync = "iCloudSync"
         static let cloudKitSync = "cloudKitSync"
+        static let clipColorTheme = "clipColorTheme"
+        static let clipColorAccentHex = "clipColorAccentHex"
         static let selectedClipPosition = "selectedClipPosition"
     }
 
@@ -303,6 +336,14 @@ final class Settings {
         didSet { guard isLoaded else { return }; d.set(cloudKitSync, forKey: Keys.cloudKitSync) }
     }
 
+    var clipColorTheme: ClipColorTheme {
+        didSet { guard isLoaded else { return }; d.set(clipColorTheme.rawValue, forKey: Keys.clipColorTheme) }
+    }
+
+    var clipColorAccentHex: String {
+        didSet { guard isLoaded else { return }; d.set(clipColorAccentHex, forKey: Keys.clipColorAccentHex) }
+    }
+
     var selectedClipPosition: SelectedClipPosition {
         didSet { guard isLoaded else { return }; d.set(selectedClipPosition.rawValue, forKey: Keys.selectedClipPosition) }
     }
@@ -330,6 +371,8 @@ final class Settings {
             Keys.onboarded: false,
             Keys.iCloudSync: false,
             Keys.cloudKitSync: true,
+            Keys.clipColorTheme: ClipColorTheme.default.rawValue,
+            Keys.clipColorAccentHex: "#FF5A9F",
             Keys.selectedClipPosition: SelectedClipPosition.center.rawValue
         ])
         historyLimit = d.integer(forKey: Keys.historyLimit)
@@ -353,6 +396,8 @@ final class Settings {
         onboarded = d.bool(forKey: Keys.onboarded)
         iCloudSync = d.bool(forKey: Keys.iCloudSync)
         cloudKitSync = d.bool(forKey: Keys.cloudKitSync)
+        clipColorTheme = ClipColorTheme(rawValue: d.integer(forKey: Keys.clipColorTheme)) ?? .default
+        clipColorAccentHex = d.string(forKey: Keys.clipColorAccentHex) ?? "#FF5A9F"
         selectedClipPosition = SelectedClipPosition(rawValue: d.integer(forKey: Keys.selectedClipPosition)) ?? .center
         isLoaded = true
     }
