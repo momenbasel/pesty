@@ -1,7 +1,6 @@
 import AppKit
 import ImageIO
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct ClipCardView: View {
     let item: ClipItem
@@ -9,6 +8,9 @@ struct ClipCardView: View {
     let selected: Bool
 
     @State private var hovering = false
+    @State private var preview: NSImage?
+    @State private var previewFailed = false
+    @State private var fileInfo: ClipPreviewProvider.FileInfo?
     private var store: ClipboardStore { ClipboardStore.shared }
     private var settings: Settings { Settings.shared }
     private var headerColor: Color { SourceColor.color(for: item.sourceBundleID) }
@@ -48,6 +50,7 @@ struct ClipCardView: View {
         .highPriorityGesture(TapGesture().modifiers(.command).onEnded { store.toggleSelection(item.id) })
         .onDrag { ClipDragProvider.make(for: item) }
         .contextMenu { menu }
+        .task(id: item.id) { await loadPreview() }
     }
 
     private var header: some View {
@@ -55,7 +58,7 @@ struct ClipCardView: View {
             headerColor
             HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(item.type.label)
+                    Text(cardTypeLabel)
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Theme.headerText)
                     Text(item.createdAt.clipRelativeLong)
@@ -70,6 +73,11 @@ struct ClipCardView: View {
             .padding(.vertical, 7)
         }
         .frame(height: Theme.headerHeight)
+    }
+
+    private var cardTypeLabel: String {
+        if item.type == .file, item.fileURLs.count > 1 { return "\(item.fileURLs.count) files" }
+        return item.type.label
     }
 
     private var appIconTile: some View {
@@ -92,24 +100,27 @@ struct ClipCardView: View {
         VStack(alignment: .leading, spacing: 0) {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, showsImage ? 0 : 13)
+                .padding(.top, showsImage ? 0 : 11)
             footer
+                .padding(.horizontal, 13)
+                .padding(.bottom, 10)
         }
-        .padding(.horizontal, 13)
-        .padding(.top, 11)
-        .padding(.bottom, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.cardBody)
+    }
+
+    /// Image clips, and file clips pointing at an image, which is how a copied
+    /// screenshot usually arrives, run edge to edge instead of sitting inset.
+    private var showsImage: Bool {
+        ClipPreviewProvider.showsImage(item) && !previewFailed
     }
 
     @ViewBuilder
     private var content: some View {
         switch item.type {
         case .image:
-            if let img = store.loadImage(for: item) {
-                Image(nsImage: img)
-                    .resizable().interpolation(.medium).scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else { placeholder("photo") }
+            imageCanvas
         case .color:
             ZStack {
                 RoundedRectangle(cornerRadius: 8).fill(Color(hex: item.colorHex ?? "#000") ?? .black)
@@ -119,14 +130,11 @@ struct ClipCardView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .file:
-            VStack(spacing: 9) {
-                Image(systemName: "doc.fill").font(.system(size: 32))
-                    .foregroundStyle(headerColor)
-                Text(item.displayTitle).font(.system(size: 12))
-                    .foregroundStyle(Theme.cardTextSecondary).lineLimit(2)
-                    .multilineTextAlignment(.center)
+            if showsImage {
+                imageCanvas
+            } else {
+                fileContent
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .link:
             VStack(spacing: 10) {
                 Spacer(minLength: 0)
@@ -142,6 +150,62 @@ struct ClipCardView: View {
                 .lineLimit(10)
                 .multilineTextAlignment(.leading)
         }
+    }
+
+    /// Over a checkerboard, so a transparent cut-out is distinguishable from
+    /// an image on white.
+    private var imageCanvas: some View {
+        ZStack {
+            CheckerboardBackground()
+            if let image = preview ?? ClipPreviewProvider.cachedImage(for: item) {
+                Image(nsImage: image)
+                    .resizable().interpolation(.medium).scaledToFit()
+            } else {
+                placeholder("photo")
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
+    }
+
+    @ViewBuilder
+    private var fileContent: some View {
+        VStack(spacing: 9) {
+            if let icon = fileInfo?.icon ?? ClipPreviewProvider.cachedIcon(for: item) {
+                Image(nsImage: icon)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: Theme.fileIconSize, height: Theme.fileIconSize)
+                    .opacity(fileInfo?.isMissing == true ? 0.5 : 1)
+            } else {
+                Image(systemName: "doc.fill").font(.system(size: 32))
+                    .foregroundStyle(headerColor)
+            }
+            Text(item.displayTitle).font(.system(size: 12))
+                .foregroundStyle(Theme.cardTextSecondary).lineLimit(2)
+                .multilineTextAlignment(.center)
+            if fileInfo?.isMissing == true {
+                Text("File not found")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Theme.cardTextTertiary)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func loadPreview() async {
+        preview = ClipPreviewProvider.cachedImage(for: item)
+        fileInfo = nil
+        previewFailed = false
+        if ClipPreviewProvider.showsImage(item) {
+            if preview == nil {
+                preview = await ClipPreviewProvider.image(for: item, scale: NSScreen.main?.backingScaleFactor ?? 2)
+            }
+            guard preview == nil, item.type == .file else { return }
+            previewFailed = true
+        }
+        guard item.type == .file else { return }
+        fileInfo = await ClipPreviewProvider.fileInfo(for: item)
     }
 
     private func placeholder(_ symbol: String) -> some View {
@@ -181,15 +245,8 @@ struct ClipCardView: View {
         .padding(.top, 8)
     }
 
-    /// Matched on the path extension rather than by loading the file: this is
-    /// evaluated on every card render, so it must not touch disk.
     private var isSingleImageFile: Bool {
-        guard item.type == .file,
-              item.fileURLs.count == 1,
-              let url = item.fileURLs.first.flatMap(URL.init(string:)),
-              url.isFileURL,
-              let type = UTType(filenameExtension: url.pathExtension) else { return false }
-        return type.conforms(to: .image)
+        ClipPreviewProvider.imageFileURL(for: item) != nil
     }
 
     /// NSHomeDirectory is the sandbox container in the App Store build, so the
@@ -351,6 +408,31 @@ struct ClipCardView: View {
         }
         image.isTemplate = false
         return image
+    }
+}
+
+/// The standard transparency checkerboard drawn behind image clips. A Canvas
+/// rather than a tiled image: the pattern is a handful of rects, and this keeps
+/// it resolution independent without shipping an asset.
+private struct CheckerboardBackground: View {
+    var square: CGFloat = 8
+
+    var body: some View {
+        Canvas { context, size in
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.white))
+            let columns = Int(ceil(size.width / square))
+            let rows = Int(ceil(size.height / square))
+            for row in 0..<max(rows, 0) {
+                for column in 0..<max(columns, 0) where (row + column).isMultiple(of: 2) {
+                    let rect = CGRect(x: CGFloat(column) * square,
+                                      y: CGFloat(row) * square,
+                                      width: square,
+                                      height: square)
+                    context.fill(Path(rect), with: .color(Color(white: 0.87)))
+                }
+            }
+        }
+        .drawingGroup()
     }
 }
 
