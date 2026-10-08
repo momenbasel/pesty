@@ -299,10 +299,20 @@ struct ClipCardView: View {
             Label(AppController.shared.pasteMenuTitle, systemImage: "doc.on.clipboard")
         }
 
-        Button { AppController.shared.pasteItem(item, asPlainText: true) } label: {
+        Button { AppController.shared.pasteItem(item, format: .plainText) } label: {
             Label("Paste as Plain Text", systemImage: "text.alignleft")
         }
         .disabled(item.plainText == nil)
+
+        Button { AppController.shared.pasteItem(item, format: .cleanFormatting) } label: {
+            Label("Paste with Clean Formatting", systemImage: "paintbrush")
+        }
+        .disabled(!FormatConverter.canConvert(item))
+
+        Button { AppController.shared.pasteItem(item, format: .markdown) } label: {
+            Label("Paste as Markdown", systemImage: "number")
+        }
+        .disabled(!FormatConverter.canConvert(item))
 
         Button { AppController.shared.copyItem(item) } label: {
             Label("Copy", systemImage: "doc.on.doc")

@@ -1,6 +1,19 @@
 import AppKit
 import Carbon.HIToolbox
 
+/// How a clip's content is written to the pasteboard when pasting.
+enum PasteFormat {
+    /// The clip exactly as captured.
+    case original
+    /// Text only, all formatting removed.
+    case plainText
+    /// Bold, italic, underline, and links survive; fonts, sizes, and colors
+    /// are normalized away.
+    case cleanFormatting
+    /// Rich content converted to Markdown text.
+    case markdown
+}
+
 @MainActor
 enum PasteService {
     private static let sourceType = NSPasteboard.PasteboardType("org.nspasteboard.source")
@@ -13,13 +26,40 @@ enum PasteService {
 
     @discardableResult
     static func copy(_ item: ClipItem,
-                     asPlainText: Bool = false,
+                     format: PasteFormat = .original,
                      to pasteboard: NSPasteboard = .general) -> Int {
-        if asPlainText, let text = item.plainText {
-            pasteboard.clearContents()
-            pasteboard.setString(text, forType: .string)
-            markSource(of: item, on: pasteboard)
-            return pasteboard.changeCount
+        switch format {
+        case .plainText:
+            if let text = item.plainText {
+                pasteboard.clearContents()
+                pasteboard.setString(text, forType: .string)
+                markSource(of: item, on: pasteboard)
+                return pasteboard.changeCount
+            }
+        case .cleanFormatting:
+            if let rtf = FormatConverter.cleanedRTF(for: item) {
+                pasteboard.clearContents()
+                pasteboard.setData(rtf, forType: .rtf)
+                if let text = item.plainText { pasteboard.setString(text, forType: .string) }
+                markSource(of: item, on: pasteboard)
+                return pasteboard.changeCount
+            }
+            // No rich source to clean: plain text is the honest result.
+            if item.plainText != nil {
+                return copy(item, format: .plainText, to: pasteboard)
+            }
+        case .markdown:
+            if let markdown = FormatConverter.markdown(for: item) {
+                pasteboard.clearContents()
+                pasteboard.setString(markdown, forType: .string)
+                markSource(of: item, on: pasteboard)
+                return pasteboard.changeCount
+            }
+            if item.plainText != nil {
+                return copy(item, format: .plainText, to: pasteboard)
+            }
+        case .original:
+            break
         }
         if item.type == .image {
             guard let img = ClipboardStore.shared.loadImage(for: item) else {
@@ -56,8 +96,8 @@ enum PasteService {
     static func paste(_ item: ClipItem,
                       into targetApp: NSRunningApplication?,
                       monitor: ClipboardMonitor,
-                      asPlainText: Bool = false) {
-        let change = copy(item, asPlainText: asPlainText)
+                      format: PasteFormat = .original) {
+        let change = copy(item, format: format)
         monitor.suppressUntilChangeCount = change
         if Settings.shared.playSound { NSSound(named: "Pop")?.play() }
 

@@ -5,6 +5,7 @@ struct ClipItem: Identifiable, Codable, Equatable {
     var type: ClipType
     var text: String?
     var rtfData: Data?
+    var htmlData: Data?
     var imageFileName: String?
     var imageHash: String?
     var fileURLs: [String]
@@ -20,6 +21,7 @@ struct ClipItem: Identifiable, Codable, Equatable {
          type: ClipType,
          text: String? = nil,
          rtfData: Data? = nil,
+         htmlData: Data? = nil,
          imageFileName: String? = nil,
          imageHash: String? = nil,
          fileURLs: [String] = [],
@@ -32,6 +34,7 @@ struct ClipItem: Identifiable, Codable, Equatable {
         self.type = type
         self.text = text
         self.rtfData = rtfData
+        self.htmlData = htmlData
         self.imageFileName = imageFileName
         self.imageHash = imageHash
         self.fileURLs = fileURLs

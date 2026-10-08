@@ -99,6 +99,15 @@ final class ClipboardMonitor {
         }
 
         let rtf = pasteboard.data(forType: .rtf)
+        // Browsers often provide HTML with no RTF; keep it for the Markdown
+        // and Clean Formatting paste conversions without changing how the
+        // clip is classified. Cap it at the same bound the sync layer uses
+        // for inline text/rtf payloads (CKSchema.inlineLimit) so a routine
+        // copy can't persist an unbounded HTML blob with every clip —
+        // oversized HTML is simply dropped and the paste conversions fall
+        // back to RTF/plain text as they did before HTML capture existed.
+        var html = pasteboard.data(forType: .html)
+        if let data = html, data.count > CKSchema.inlineLimit { html = nil }
         if let string = pasteboard.string(forType: .string), !string.isEmpty {
             let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
             let type: ClipType
@@ -109,7 +118,7 @@ final class ClipboardMonitor {
             } else {
                 type = .text
             }
-            var item = ClipItem(type: type, text: string, rtfData: rtf)
+            var item = ClipItem(type: type, text: string, rtfData: rtf, htmlData: html)
             decorate(&item)
             return item
         }

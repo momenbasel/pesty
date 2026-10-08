@@ -318,10 +318,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return app.bundleIdentifier == bundleID
     }
 
-    func pasteItem(_ item: ClipItem, asPlainText: Bool = false) {
+    func pasteItem(_ item: ClipItem, format: PasteFormat = .original) {
         let target = pasteTarget
         hideBar()
-        PasteService.paste(item, into: target, monitor: monitor, asPlainText: asPlainText)
+        PasteService.paste(item, into: target, monitor: monitor, format: format)
     }
 
     func copyItem(_ item: ClipItem) {
@@ -523,7 +523,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if digit <= items.count {
                 let plain = includes(Settings.shared.plainTextModifier, in: flags)
                     && Settings.shared.plainTextModifier != Settings.shared.quickPasteModifier
-                pasteItem(items[digit - 1], asPlainText: plain)
+                pasteItem(items[digit - 1], format: plain ? .plainText : .original)
             }
             return nil
         }
