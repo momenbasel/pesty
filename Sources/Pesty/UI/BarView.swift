@@ -100,6 +100,7 @@ struct BarView: View {
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
+        .fixedSize()
         .help("Delete \(count) selected clips (⌘⌫)")
         .accessibilityLabel("Delete \(count) selected clips")
     }
