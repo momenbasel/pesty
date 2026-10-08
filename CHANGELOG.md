@@ -4,6 +4,80 @@ All notable changes to Pesty are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-10-08
+
+The v2 wave of features from @alvst (#80), each reviewed and landed with the
+author's commits, plus everything merged since 1.2.0: undo for deletions, image
+previews on cards, a real search field, a full clip context menu with an
+editor, multi-select, retention limits and dragging clips out of Pesty.
+
+### Added
+- Image clips, and file clips that point at one image, show the picture edge
+  to edge over a checkerboard; other file clips show the file's Finder icon,
+  with a "File not found" caption when the file is gone. Decoding happens off
+  the main thread behind a bounded cache. (#96, #102)
+- Command-Z puts a deleted clip, or a whole bulk delete, back where it was for five
+  minutes, and an Undo button sits in the bar while something is restorable.
+  Hold Option while deleting to skip it for that deletion, or turn on "Delete
+  permanently" in Settings. The undo stack is in memory only: nothing deleted
+  is written back to disk or synced. (#88)
+- The search indicator is a real, editable field. Return pastes the selected
+  clip, Command-1 to Command-9 still quick-paste, and the arrow keys move the selection
+  while typing. (#85, #101)
+- Command-C copies the selected clip and moves it to the front of history. (#82)
+- Paste as Clean Formatting or as Markdown from the card menu. (#93)
+- Command-Left and Command-Right switch between History and Pinboards. (#83)
+- Clip color themes (Default, Vibrant, Accent Shades) and a choice of where the
+  selected clip sits in the strip. (#94)
+- History can be limited by clip count or by age. The age limit is a slider
+  with named presets from 1 Day to Forever, applied when the drag ends and
+  confirmed when it would remove clips. Pruning is local and never removes
+  clips from other devices. (#76, #89)
+- An optional live-resize handle on the Paste Bar, off by default. (#87)
+- "Play sound when copying from Pesty", separate from the paste sound. (#90)
+- History's size on disk in Settings, covering history and pinboards. (#91)
+- Real pixel dimensions for image clips and real paths for file clips in the
+  card footer. (#95)
+- "Promote pasted clips to the top of history", off by default. (#92)
+- Icons on the bar's overflow menu. (#84)
+- Double-click a Pinboard tab to rename it. (#103, #100)
+- A full clip context menu: Paste to the target app, Paste as Plain Text, Copy,
+  Edit in a rich-text editor with Writing Tools, Rename, Pin, Preview, Share
+  and Delete. (#78)
+- Multi-select: Command-click toggles a card, Shift-click extends the range, and
+  deleting more than one clip asks first with the exact count. (#77)
+- Drag clips out of Pesty into other apps or Finder: links as URLs, images as
+  PNG, files as file URLs, rich text as RTF. (#73)
+- The quick-paste and plain-text modifiers are configurable. (#71)
+- A bare Backspace deletes the selected clip when no search is active, ignoring
+  key repeat and a query that was just cleared. (#70)
+- A preference to keep the bar open when clicking outside; a pinned bar no
+  longer covers full-screen apps. (#74)
+- Copies made through other clipboard tools attribute to the real origin app
+  through the org.nspasteboard.source marker. (#72)
+- The bar adopts Liquid Glass and the clip cards get a clearer visual
+  hierarchy. (#14, #15)
+- A standalone SwiftPM smoke test. (#79)
+
+### Fixed
+- A direct paste blocked by a missing Accessibility grant says so once in the
+  toast instead of silently copying. (#92)
+- The bulk-delete button no longer collapses to icon-only in narrow layouts.
+  (#86)
+- Copying a Pinboard clip back to history gives it its own identity, so sync
+  cannot evict it. (#82)
+- Editing a clip can no longer make CloudKit delete the clip that was just
+  edited. (#78)
+- The clip strip returns to its start each time the bar opens. (#69)
+- Pesty shows the Paste Bar when it is reopened. (#68)
+- Deleting is scoped to the collection on screen. (#67)
+- The bar's key monitor is scoped to its own panel and the paste target is
+  resolved from the app that was frontmost before the bar. (#66)
+- Long search queries keep the newest typed text visible. (#75)
+- The sync control is hidden in builds where sync is off. (#7)
+
+[1.3.0]: https://github.com/momenbasel/pesty/releases/tag/v1.3.0
+
 ## [1.2.0] - 2026-08-11
 
 Bug fixes for multi-monitor setups and a bar that could stop opening, plus a
