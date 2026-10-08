@@ -111,7 +111,11 @@ enum PasteService {
         #else
         // Direct-download build: optionally paste straight into the active app by
         // synthesizing ⌘V. This requires the user's Accessibility grant.
-        guard Settings.shared.pasteDirectly && AXIsProcessTrusted() else { return }
+        guard Settings.shared.pasteDirectly else { return }
+        guard AXIsProcessTrusted() else {
+            AppController.shared.noteBlockedDirectPaste()
+            return
+        }
         target.activate()
         waitForFrontmost(target, attempts: 20)
         #endif

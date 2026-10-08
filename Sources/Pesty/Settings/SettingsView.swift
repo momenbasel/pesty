@@ -132,6 +132,7 @@ private struct GeneralSettings: View {
                 Toggle("Paste directly into the active app", isOn: $settings.pasteDirectly)
                 #endif
                 Toggle("Ignore passwords (concealed clips)", isOn: $settings.ignoreConcealed)
+                Toggle("Promote pasted clips to the top of history", isOn: $settings.promoteOnPaste)
                 Toggle("Play sound on paste", isOn: $settings.playSound)
                 Toggle("Play sound when copying from Pesty", isOn: $settings.playSoundOnCopy)
                 Toggle("Hide Pesty when clicking outside", isOn: $settings.hideOnClickOutside)

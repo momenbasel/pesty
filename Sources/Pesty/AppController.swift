@@ -17,6 +17,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var previewWindow: NSWindow?
     private var previewedItemID: UUID?
     private var keyMonitor: Any?
+    #if !MAS
+    private var notedBlockedDirectPaste = false
+    #endif
 
     private(set) var previousApp: NSRunningApplication?
     private(set) var lastActiveApp: NSRunningApplication?
@@ -380,8 +383,25 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func pasteItem(_ item: ClipItem, format: PasteFormat = .original) {
         let target = pasteTarget
         hideBar()
+        let previousChange = NSPasteboard.general.changeCount
         PasteService.paste(item, into: target, monitor: monitor, format: format)
+        if Settings.shared.promoteOnPaste, NSPasteboard.general.changeCount != previousChange {
+            store.promoteCopiedItem(item)
+        }
     }
+
+    #if !MAS
+    /// A direct paste that quietly falls back to a copy reads as "paste is
+    /// broken". Say so once per launch, in the toast rather than a modal:
+    /// the clip is on the pasteboard and Command-V finishes the job.
+    func noteBlockedDirectPaste() {
+        guard !notedBlockedDirectPaste else { return }
+        notedBlockedDirectPaste = true
+        copyToast.show(message: "Copied. Grant Accessibility in System Settings to paste directly.",
+                       symbol: "exclamationmark.triangle.fill",
+                       linger: 4)
+    }
+    #endif
 
     func copyItem(_ item: ClipItem) {
         let previousChange = NSPasteboard.general.changeCount
