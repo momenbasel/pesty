@@ -280,6 +280,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             previousApp = front
             lastActiveApp = front
         }
+        // The panel keeps its first responder across orderOut, so a field
+        // left focused by a hide mid-search would otherwise own the next
+        // presentation's keys: Return would not paste and arrows would move
+        // a caret in an empty query.
+        barController?.resignSearch()
+        store.barInputMode = .cards
         store.searchText = ""
         store.source = .history
         store.prepareForBarPresentation()
@@ -312,15 +318,6 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard store.searchText != text else { return }
         store.searchText = text
         store.selectFirst()
-    }
-
-    /// Return leaves the query intact and hands arrows/shortcuts back to the
-    /// clip strip. With no result there is nowhere to move, so search keeps
-    /// focus instead.
-    func submitBarSearch() {
-        guard store.barInputMode == .search, !store.visibleItems.isEmpty else { return }
-        barController?.resignSearch()
-        store.barInputMode = .cards
     }
 
     func clearBarSearch() {
@@ -550,14 +547,6 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // monitor is only responsible for keys delivered to the panel itself.
         guard event.window === barController?.window else { return event }
 
-        // The native search field owns the entire event while it is editing:
-        // arrows, selection, clipboard commands, deletion, spaces, keyboard
-        // layouts, and composed text all need real AppKit text-editing
-        // behavior, not this monitor's clip-navigation shortcuts.
-        if barController?.searchOwnsFirstResponder == true {
-            return event
-        }
-
         if handleBarCommandShortcut(event) { return nil }
 
         let code = Int(event.keyCode)
@@ -575,6 +564,15 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 pasteItem(items[digit - 1], format: plain ? .plainText : .original)
             }
             return nil
+        }
+
+        // Past the quick-paste digits, the native search field owns the event
+        // while it is editing: selection, clipboard commands, deletion, spaces,
+        // keyboard layouts, and composed text all need real AppKit
+        // text-editing behavior. Return and the arrows come back through the
+        // field's delegate.
+        if barController?.searchOwnsFirstResponder == true {
+            return event
         }
 
         switch code {

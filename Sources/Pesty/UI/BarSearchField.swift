@@ -4,13 +4,6 @@ import SwiftUI
 /// Keeps the Paste Bar's native search field reachable while SwiftUI renders
 /// it at a compact width. The local key monitor can therefore transfer first
 /// responder synchronously and let the triggering key reach AppKit normally.
-///
-/// Ported from Pesty-Alvie's `BarSearchField.swift`, which replaced the
-/// previous approach — a global keyDown monitor that appended characters
-/// directly to `store.searchText` — with a real `NSTextField` edited through
-/// the normal AppKit responder chain. The append-only approach had no actual
-/// cursor: arrow keys always moved clip selection, never a caret inside the
-/// query, and mid-string edits/selection/IME composition were impossible.
 @MainActor
 final class BarSearchFieldBridge {
     weak var field: NSTextField?
@@ -57,6 +50,7 @@ struct NativeBarSearchField: NSViewRepresentable {
     let onEnd: () -> Void
     let onSubmit: () -> Void
     let onCancel: () -> Void
+    let onMoveSelection: (Int) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -74,8 +68,7 @@ struct NativeBarSearchField: NSViewRepresentable {
         field.lineBreakMode = .byTruncatingTail
         field.placeholderString = "Search"
         field.font = .systemFont(ofSize: 13, weight: .medium)
-        // The chrome bar is dark, unlike Pesty-Alvie's light card styling —
-        // matches Theme.chromeTextPrimary (Color.white.opacity(0.95)).
+        // Matches Theme.chromeTextPrimary (Color.white.opacity(0.95)).
         field.textColor = NSColor.white.withAlphaComponent(0.95)
         let placeholderColor = NSColor.white.withAlphaComponent(0.55)
         field.placeholderAttributedString = NSAttributedString(
@@ -133,6 +126,29 @@ struct NativeBarSearchField: NSViewRepresentable {
             }
             if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
                 parent.onCancel()
+                return true
+            }
+            // The query is one line, so vertical arrows have no caret to move
+            // and walk the strip instead. Horizontal arrows edit the query
+            // until the caret reaches an end of it, then do the same.
+            let caret = textView.selectedRange()
+            let length = (textView.string as NSString).length
+            if commandSelector == #selector(NSResponder.moveUp(_:)) {
+                parent.onMoveSelection(-1)
+                return true
+            }
+            if commandSelector == #selector(NSResponder.moveDown(_:)) {
+                parent.onMoveSelection(1)
+                return true
+            }
+            if commandSelector == #selector(NSResponder.moveLeft(_:)),
+               caret.length == 0, caret.location == 0 {
+                parent.onMoveSelection(-1)
+                return true
+            }
+            if commandSelector == #selector(NSResponder.moveRight(_:)),
+               caret.length == 0, caret.location == length {
+                parent.onMoveSelection(1)
                 return true
             }
             return false

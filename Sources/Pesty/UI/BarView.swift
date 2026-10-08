@@ -90,8 +90,9 @@ struct BarView: View {
                 bridge: searchBridge,
                 onBegin: { AppController.shared.setBarSearchEditing(true) },
                 onEnd: { AppController.shared.setBarSearchEditing(false) },
-                onSubmit: { AppController.shared.submitBarSearch() },
-                onCancel: { AppController.shared.cancelBarSearchOrHide() }
+                onSubmit: { AppController.shared.pasteSelected() },
+                onCancel: { AppController.shared.cancelBarSearchOrHide() },
+                onMoveSelection: { store.moveSelection(by: $0) }
             )
             .frame(minWidth: searchIsActive ? 120 : 0,
                    idealWidth: searchIsActive ? 180 : 0,
