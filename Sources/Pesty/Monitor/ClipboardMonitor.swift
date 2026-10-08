@@ -4,6 +4,7 @@ import CryptoKit
 @MainActor
 final class ClipboardMonitor {
     private static let sourceType = NSPasteboard.PasteboardType("org.nspasteboard.source")
+    private static let htmlCaptureLimit = 64 * 1024
     private let pasteboard = NSPasteboard.general
     private var lastChangeCount: Int
     private var timer: Timer?
@@ -101,13 +102,12 @@ final class ClipboardMonitor {
         let rtf = pasteboard.data(forType: .rtf)
         // Browsers often provide HTML with no RTF; keep it for the Markdown
         // and Clean Formatting paste conversions without changing how the
-        // clip is classified. Cap it at the same bound the sync layer uses
-        // for inline text/rtf payloads (CKSchema.inlineLimit) so a routine
-        // copy can't persist an unbounded HTML blob with every clip —
-        // oversized HTML is simply dropped and the paste conversions fall
-        // back to RTF/plain text as they did before HTML capture existed.
-        var html = pasteboard.data(forType: .html)
-        if let data = html, data.count > CKSchema.inlineLimit { html = nil }
+        // clip is classified. RTF already serves those conversions, so HTML
+        // is stored only when there is none, and only up to a bound that
+        // keeps store.json, rewritten on every capture, from growing by the
+        // size of every web page copied from.
+        var html = rtf == nil ? pasteboard.data(forType: .html) : nil
+        if let data = html, data.count > Self.htmlCaptureLimit { html = nil }
         if let string = pasteboard.string(forType: .string), !string.isEmpty {
             let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
             let type: ClipType

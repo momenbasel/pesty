@@ -298,6 +298,7 @@ final class ClipboardStore {
             type: item.type,
             text: item.text,
             rtfData: item.rtfData,
+            htmlData: item.htmlData,
             imageFileName: item.imageFileName,
             imageHash: item.imageHash,
             fileURLs: item.fileURLs,
@@ -325,6 +326,7 @@ final class ClipboardStore {
             updated.type = type
             updated.text = text
             updated.rtfData = richTextData
+            updated.htmlData = nil
             updated.colorHex = nil
             return updated
         }
@@ -339,6 +341,7 @@ final class ClipboardStore {
             updated.type = .color
             updated.text = nil
             updated.rtfData = nil
+            updated.htmlData = nil
             updated.colorHex = normalized
             return updated
         }
