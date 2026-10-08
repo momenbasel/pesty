@@ -147,6 +147,18 @@ private struct GeneralSettings: View {
                 #endif
             }
 
+            Section("Clip Navigation") {
+                Picker("Selected clip position", selection: $settings.selectedClipPosition) {
+                    ForEach(SelectedClipPosition.allCases) { position in
+                        Text(position.title).tag(position)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(settings.selectedClipPosition.detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             #if MAS
             Section("Sync") {
                 Toggle("Sync history with iCloud", isOn: Binding(

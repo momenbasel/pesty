@@ -166,13 +166,23 @@ struct BarView: View {
             }
             .onChange(of: store.selectedID) { _, id in
                 guard let id else { return }
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
-                    proxy.scrollTo(id, anchor: .center)
-                }
+                scrollToSelected(id, proxy: proxy)
+            }
+            .onChange(of: settings.selectedClipPosition) { _, _ in
+                guard let id = store.selectedID else { return }
+                scrollToSelected(id, proxy: proxy)
             }
             .overlay { if store.visibleItems.isEmpty { emptyState } }
         }
         .frame(maxHeight: .infinity)
+    }
+
+    /// The anchor preference decides whether the strip parks the selected
+    /// card centered or against the right edge, Paste-style.
+    private func scrollToSelected(_ id: UUID, proxy: ScrollViewProxy) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
+            proxy.scrollTo(id, anchor: settings.selectedClipPosition == .rightEdge ? .trailing : .center)
+        }
     }
 
     private var emptyState: some View {

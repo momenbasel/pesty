@@ -138,6 +138,27 @@ enum HistoryRetentionPreset: Int, CaseIterable, Identifiable {
     }
 }
 
+enum SelectedClipPosition: Int, CaseIterable, Identifiable {
+    case center
+    case rightEdge
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .center: "Center"
+        case .rightEdge: "Right edge"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .center: "Keep the selected clip centered with surrounding context visible."
+        case .rightEdge: "Place the selected clip at the far right, like Paste."
+        }
+    }
+}
+
 @Observable
 @MainActor
 final class Settings {
@@ -166,6 +187,7 @@ final class Settings {
         static let onboarded = "onboarded"
         static let iCloudSync = "iCloudSync"
         static let cloudKitSync = "cloudKitSync"
+        static let selectedClipPosition = "selectedClipPosition"
     }
 
     var historyLimit: Int {
@@ -281,6 +303,10 @@ final class Settings {
         didSet { guard isLoaded else { return }; d.set(cloudKitSync, forKey: Keys.cloudKitSync) }
     }
 
+    var selectedClipPosition: SelectedClipPosition {
+        didSet { guard isLoaded else { return }; d.set(selectedClipPosition.rawValue, forKey: Keys.selectedClipPosition) }
+    }
+
     private init() {
         d.register(defaults: [
             Keys.historyLimit: 500,
@@ -303,7 +329,8 @@ final class Settings {
             Keys.showMenuBarIcon: true,
             Keys.onboarded: false,
             Keys.iCloudSync: false,
-            Keys.cloudKitSync: true
+            Keys.cloudKitSync: true,
+            Keys.selectedClipPosition: SelectedClipPosition.center.rawValue
         ])
         historyLimit = d.integer(forKey: Keys.historyLimit)
         historyRetentionMode = HistoryRetentionMode(rawValue: d.string(forKey: Keys.historyRetentionMode) ?? "")
@@ -326,6 +353,7 @@ final class Settings {
         onboarded = d.bool(forKey: Keys.onboarded)
         iCloudSync = d.bool(forKey: Keys.iCloudSync)
         cloudKitSync = d.bool(forKey: Keys.cloudKitSync)
+        selectedClipPosition = SelectedClipPosition(rawValue: d.integer(forKey: Keys.selectedClipPosition)) ?? .center
         isLoaded = true
     }
 
