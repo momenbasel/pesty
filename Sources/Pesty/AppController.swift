@@ -328,13 +328,15 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let previousChange = NSPasteboard.general.changeCount
         let change = PasteService.copy(item)
         monitor.suppressUntilChangeCount = change
+        // PasteService.copy leaves the pasteboard alone when an image file is
+        // missing; neither the promotion nor the toast should claim otherwise.
         if change != previousChange {
             store.promoteCopiedItem(item)
+            copyToast.show()
         }
         // Tink, not Pop: copy and paste stay audibly distinct.
         if Settings.shared.playSoundOnCopy { NSSound(named: "Tink")?.play() }
         hideBar()
-        copyToast.show()
     }
 
     func copySelected() {
@@ -570,7 +572,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             deleteEffectiveSelection()
             return nil
         case kVK_ANSI_C:
-            if cmd { copySelected(); return nil }
+            if cmd, !ctrl, !opt, !flags.contains(.shift) { copySelected(); return nil }
         default:
             break
         }

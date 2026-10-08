@@ -132,9 +132,15 @@ final class ClipboardStore {
     /// Pesty's own pasteboard writes, so a plain re-copy would otherwise leave
     /// the clip sitting wherever it already was in history.
     func promoteCopiedItem(_ item: ClipItem, at date: Date = .now) {
-        var copied = item
-        copied.createdAt = date
-        addCaptured(copied)
+        if history.contains(where: { $0.sameContent(as: item) }) {
+            var copied = item
+            copied.createdAt = date
+            addCaptured(copied)
+            return
+        }
+        // A Pinboard card with no history twin: history gets its own copy, as
+        // it would from any other app's copy, never the pinboard's UUID.
+        addCaptured(independentCopy(of: item, createdAt: date))
     }
 
     func applyRetentionPolicy() { trimHistory(); scheduleSave() }
@@ -281,7 +287,13 @@ final class ClipboardStore {
     func saveToPinboard(_ item: ClipItem, boardID: UUID) {
         guard let i = pinboards.firstIndex(where: { $0.id == boardID }) else { return }
         if pinboards[i].items.contains(where: { $0.sameContent(as: item) }) { return }
-        // Pinboard copies mint their own UUID (one sync record per container).
+        pinboards[i].items.insert(independentCopy(of: item, createdAt: item.createdAt), at: 0)
+        scheduleSave()
+    }
+
+    /// A copy with its own UUID and its own image file, so no two containers
+    /// ever share an identity (one sync record per container) or a file.
+    private func independentCopy(of item: ClipItem, createdAt: Date) -> ClipItem {
         var copy = ClipItem(
             type: item.type,
             text: item.text,
@@ -293,10 +305,9 @@ final class ClipboardStore {
             sourceBundleID: item.sourceBundleID,
             sourceAppName: item.sourceAppName,
             customTitle: item.customTitle,
-            createdAt: item.createdAt)
+            createdAt: createdAt)
         if let dup = duplicateImageFile(item) { copy.imageFileName = dup }
-        pinboards[i].items.insert(copy, at: 0)
-        scheduleSave()
+        return copy
     }
 
     func item(withID id: UUID) -> ClipItem? {
