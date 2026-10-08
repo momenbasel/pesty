@@ -139,12 +139,8 @@ enum HistoryRetentionPreset: Int, CaseIterable, Identifiable {
 }
 
 enum ClipColorTheme: Int, CaseIterable, Identifiable {
-    // The stronger treatment is the default: side by side, the plain source
-    // color and its boosted version were close enough to be hard to tell
-    // apart, which made "Default" the wrong name for the quieter one.
-    // Classic keeps the unmodified color as the named alternative.
     case `default`
-    case classic
+    case vibrant
     case accentShades
 
     var id: Int { rawValue }
@@ -152,7 +148,7 @@ enum ClipColorTheme: Int, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .default: "Default"
-        case .classic: "Classic"
+        case .vibrant: "Vibrant"
         case .accentShades: "Accent shades"
         }
     }
@@ -160,9 +156,9 @@ enum ClipColorTheme: Int, CaseIterable, Identifiable {
     var detail: String {
         switch self {
         case .default:
-            "Use a stronger, higher-contrast version of each source app color."
-        case .classic:
             "Match each clip to its source app\u{2019}s familiar card color."
+        case .vibrant:
+            "Use a stronger, higher-contrast version of each source app color."
         case .accentShades:
             "Give each source app a stable lighter or darker shade of one color."
         }

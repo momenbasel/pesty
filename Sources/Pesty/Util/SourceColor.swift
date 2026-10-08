@@ -42,9 +42,9 @@ enum SourceColor {
     static func color(for bundleID: String?) -> Color {
         switch Settings.shared.clipColorTheme {
         case .default:
-            return vibrantColor(from: paletteColor(for: bundleID))
-        case .classic:
-            return paletteColor(for: bundleID)
+            return palette[paletteIndex(for: bundleID)]
+        case .vibrant:
+            return vibrantPalette[paletteIndex(for: bundleID)]
         case .accentShades:
             return accentShade(
                 for: bundleID?.isEmpty == false ? bundleID! : "unknown",
@@ -59,16 +59,18 @@ enum SourceColor {
         accentVariants.map { accentShade(variant: $0, accentHex: accentHex) }
     }
 
-    /// Upstream's original per-app color: a stable palette slot assigned on
-    /// first sight and persisted, so a given app keeps its color across launches.
-    private static func paletteColor(for bundleID: String?) -> Color {
-        guard let id = bundleID, !id.isEmpty else { return palette[0] }
-        if let i = map[id] { return palette[i % palette.count] }
+    /// A stable palette slot assigned on first sight and persisted, so a given
+    /// app keeps its color across launches.
+    private static func paletteIndex(for bundleID: String?) -> Int {
+        guard let id = bundleID, !id.isEmpty else { return 0 }
+        if let i = map[id] { return i % palette.count }
         let i = map.count % palette.count
         map[id] = i
         UserDefaults.standard.set(map, forKey: key)
-        return palette[i]
+        return i
     }
+
+    private static let vibrantPalette: [Color] = palette.map { vibrantColor(from: $0) }
 
     private static func vibrantColor(from color: Color) -> Color {
         guard let nsColor = NSColor(color).usingColorSpace(.sRGB) else { return color }
@@ -91,22 +93,33 @@ enum SourceColor {
         return accentShade(variant: accentVariants[index], accentHex: accentHex)
     }
 
-    private static func accentShade(variant: AccentVariant, accentHex: String) -> Color {
+    private static var accentBase: (hex: String, hue: Double, saturation: Double, brightness: Double)?
+
+    private static func accentBaseHSB(for accentHex: String) -> (hue: Double, saturation: Double, brightness: Double) {
+        if let base = accentBase, base.hex == accentHex {
+            return (base.hue, base.saturation, base.brightness)
+        }
         let nsColor = NSColor(hex: accentHex)?.usingColorSpace(.sRGB)
             ?? NSColor.systemPink.usingColorSpace(.sRGB)!
         var hue: CGFloat = 0
         var saturation: CGFloat = 0
         var brightness: CGFloat = 0
         nsColor.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: nil)
+        accentBase = (accentHex, Double(hue), Double(saturation), Double(brightness))
+        return (Double(hue), Double(saturation), Double(brightness))
+    }
+
+    private static func accentShade(variant: AccentVariant, accentHex: String) -> Color {
+        let base = accentBaseHSB(for: accentHex)
 
         // Normalizing the middle brightness prevents very light or very dark
         // user selections from collapsing several variants into the same color.
-        let middleBrightness = min(0.76, max(0.66, Double(brightness)))
-        let adjustedHue = (Double(hue) + variant.hueOffset + 1).truncatingRemainder(dividingBy: 1)
+        let middleBrightness = min(0.76, max(0.66, base.brightness))
+        let adjustedHue = (base.hue + variant.hueOffset + 1).truncatingRemainder(dividingBy: 1)
 
         return Color(
             hue: adjustedHue,
-            saturation: min(0.98, max(0.60, Double(saturation) + variant.saturationOffset)),
+            saturation: min(0.98, max(0.60, base.saturation + variant.saturationOffset)),
             brightness: min(0.98, max(0.32, middleBrightness + variant.brightnessOffset))
         )
     }
