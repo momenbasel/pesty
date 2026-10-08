@@ -208,6 +208,7 @@ final class Settings {
         static let playSound = "playSound"
         static let playSoundOnCopy = "playSoundOnCopy"
         static let ignoreConcealed = "ignoreConcealed"
+        static let deletePermanently = "deletePermanently"
         static let ignoredSourceAppBundleIDs = "ignoredSourceAppBundleIDs"
         static let barHeight = "barHeight"
         static let showBarResizeHandle = "showBarResizeHandle"
@@ -297,6 +298,12 @@ final class Settings {
         didSet { guard isLoaded else { return }; d.set(ignoreConcealed, forKey: Keys.ignoreConcealed) }
     }
 
+    /// Deleted clips are purged at once instead of staying restorable with
+    /// Command-Z for five minutes.
+    var deletePermanently: Bool {
+        didSet { guard isLoaded else { return }; d.set(deletePermanently, forKey: Keys.deletePermanently) }
+    }
+
     /// Applications whose copied content should never be recorded in history.
     /// Store bundle identifiers rather than paths so the choice continues to work
     /// when an app is updated or moved.
@@ -369,6 +376,7 @@ final class Settings {
             // shouldn't gain a new audible behavior from an update.
             Keys.playSoundOnCopy: false,
             Keys.ignoreConcealed: true,
+            Keys.deletePermanently: false,
             Keys.ignoredSourceAppBundleIDs: [],
             Keys.barHeight: BarResizeGeometry.defaultHeight,
             Keys.showBarResizeHandle: false,
@@ -394,6 +402,7 @@ final class Settings {
         playSound = d.bool(forKey: Keys.playSound)
         playSoundOnCopy = d.bool(forKey: Keys.playSoundOnCopy)
         ignoreConcealed = d.bool(forKey: Keys.ignoreConcealed)
+        deletePermanently = d.bool(forKey: Keys.deletePermanently)
         ignoredSourceAppBundleIDs = (d.stringArray(forKey: Keys.ignoredSourceAppBundleIDs) ?? [])
             .filter { !$0.isEmpty }
         let storedBarHeight = d.double(forKey: Keys.barHeight)

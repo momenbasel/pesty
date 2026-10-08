@@ -84,6 +84,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        store.forgetDeletions()
         store.saveNow()
     }
 
@@ -478,28 +479,34 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    func deleteEffectiveSelection() {
+    /// `permanently` skips Undo for this one deletion: the user held Option.
+    func deleteEffectiveSelection(permanently: Bool = false) {
         let selection = store.effectiveSelectionIDs
         let targets = store.visibleItems.filter { selection.contains($0.id) }
         guard !targets.isEmpty else { return }
         if targets.count == 1 {
-            store.delete(targets[0])
+            store.delete(targets[0], permanently: permanently)
             return
         }
         suppressAutoHide = true
         defer { suppressAutoHide = false }
         let alert = NSAlert()
         alert.messageText = "Delete \(targets.count) Clips?"
+        let noUndo = permanently || Settings.shared.deletePermanently
         #if MAS
-        alert.informativeText = "There is no undo. When iCloud sync is on, these clips are also removed from your other devices."
+        alert.informativeText = noUndo
+            ? "This cannot be undone. When iCloud sync is on, these clips are also removed from your other devices."
+            : "You can undo this with ⌘Z for the next 5 minutes. When iCloud sync is on, these clips are also removed from your other devices."
         #else
-        alert.informativeText = "There is no undo."
+        alert.informativeText = noUndo
+            ? "This cannot be undone."
+            : "You can undo this with ⌘Z for the next 5 minutes."
         #endif
         let confirm = alert.addButton(withTitle: "Delete \(targets.count) Clips")
         confirm.hasDestructiveAction = true
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        store.delete(items: targets)
+        store.delete(items: targets, permanently: permanently)
     }
 
     func deleteSelection(containing item: ClipItem) {
@@ -620,7 +627,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         case kVK_DownArrow:
             store.moveSelection(by: 1); return nil
         case kVK_Delete:
-            if cmd { deleteEffectiveSelection(); return nil }
+            if cmd { deleteEffectiveSelection(permanently: opt); return nil }
             // Backspace edits the query before it can remove a filtered clip,
             // even when focus has already moved back to the cards (e.g.
             // after Return submitted the search). Refocusing the native
@@ -640,16 +647,19 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             // Backspace that just finished clearing a query must not start
             // deleting clips at the key-repeat rate - and a short cooldown
             // after the search empties separates "clear the query" from
-            // "delete a clip". There is no undo, and deletions replicate to
+            // "delete a clip". Command-Z brings a deleted clip back for five
+            // minutes unless Option was held, and deletions replicate to
             // other devices when sync is on.
             if !event.isARepeat,
                Date().timeIntervalSince(searchClearedAt) > Self.deleteAfterSearchClearCooldown {
-                deleteEffectiveSelection()
+                deleteEffectiveSelection(permanently: opt)
             }
             return nil
         case kVK_ForwardDelete:
-            deleteEffectiveSelection()
+            deleteEffectiveSelection(permanently: opt)
             return nil
+        case kVK_ANSI_Z:
+            if cmd, !ctrl, !opt, !flags.contains(.shift), store.undoLastDelete() { return nil }
         case kVK_ANSI_C:
             if cmd, !ctrl, !opt, !flags.contains(.shift) { copySelected(); return nil }
         default:
