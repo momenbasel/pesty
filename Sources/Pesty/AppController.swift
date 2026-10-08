@@ -326,6 +326,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func copyItem(_ item: ClipItem) {
         let change = PasteService.copy(item)
         monitor.suppressUntilChangeCount = change
+        // Tink, not Pop: copy and paste stay audibly distinct.
+        if Settings.shared.playSoundOnCopy { NSSound(named: "Tink")?.play() }
         hideBar()
     }
 
