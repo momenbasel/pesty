@@ -192,6 +192,19 @@ struct ClipCardView: View {
         return type.conforms(to: .image)
     }
 
+    /// NSHomeDirectory is the sandbox container in the App Store build, so the
+    /// real home comes from the account record instead.
+    private static let homePath: String = {
+        if let home = getpwuid(getuid())?.pointee.pw_dir { return String(cString: home) }
+        return NSHomeDirectory()
+    }()
+
+    private static func abbreviatedPath(_ path: String) -> String {
+        if path == homePath { return "~" }
+        guard path.hasPrefix(homePath + "/") else { return path }
+        return "~" + path.dropFirst(homePath.count)
+    }
+
     private var metaLeft: String {
         switch item.type {
         case .text, .richText:
@@ -214,7 +227,7 @@ struct ClipCardView: View {
                 guard let size = ImagePixelSize.of(url) else { return url.lastPathComponent }
                 return "\(Int(size.width)) × \(Int(size.height))"
             }
-            return (url.path as NSString).abbreviatingWithTildeInPath
+            return Self.abbreviatedPath(url.path)
         case .image:
             guard let size = ImagePixelSize.of(item) else { return "Image" }
             return "\(Int(size.width)) × \(Int(size.height))"
@@ -345,7 +358,8 @@ struct ClipCardView: View {
 /// decoding it, and remembers them: the card footer asks on every render.
 @MainActor
 enum ImagePixelSize {
-    private static var cache: [String: CGSize] = [:]
+    private static var cache: [String: CGSize?] = [:]
+    private static let cacheLimit = 512
 
     static func of(_ item: ClipItem) -> CGSize? {
         guard item.imageFileName != nil,
@@ -356,12 +370,17 @@ enum ImagePixelSize {
     static func of(_ url: URL) -> CGSize? {
         let name = url.path
         if let cached = cache[name] { return cached }
+        if cache.count >= cacheLimit { cache.removeAll() }
+        let size = read(url)
+        cache.updateValue(size, forKey: name)
+        return size
+    }
+
+    private static func read(_ url: URL) -> CGSize? {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
-        let size = CGSize(width: width, height: height)
-        cache[name] = size
-        return size
+        return CGSize(width: width, height: height)
     }
 }
