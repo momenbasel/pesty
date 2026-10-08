@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import SwiftUI
 
 /// Lets the Paste Bar's local key monitor leave Escape and drag-time keys to
@@ -149,7 +150,7 @@ private final class BarResizeHandleView: NSView, BarResizeHandleResponder {
     }
 
     override func keyDown(with event: NSEvent) {
-        guard isTrackingDrag, event.keyCode == 53 else {
+        guard isTrackingDrag, Int(event.keyCode) == kVK_Escape else {
             super.keyDown(with: event)
             return
         }
@@ -200,8 +201,11 @@ private final class BarResizeHandleView: NSView, BarResizeHandleResponder {
             NSCursor.pop()
             ownsResizeCursor = false
         }
-        if window?.firstResponder === self {
-            window?.makeFirstResponder(previousFirstResponder)
+        // If the previous responder refuses, the window itself takes over;
+        // the handle must never keep the bar's keys after a drag.
+        if let window, window.firstResponder === self,
+           !window.makeFirstResponder(previousFirstResponder) {
+            window.makeFirstResponder(nil)
         }
         previousFirstResponder = nil
     }

@@ -292,15 +292,6 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
         Settings.shared.barHeight = Double(frame.height)
     }
 
-    func applyConfiguredBarHeight() {
-        guard phase == .shown, resizeSession == nil,
-              let visibleFrame = targetVisibleFrame else { return }
-        applyResizeFrame(BarResizeGeometry.panelFrame(
-            for: Settings.shared.barHeight,
-            in: visibleFrame
-        ))
-    }
-
     private func applyResizeFrame(_ frame: NSRect) {
         guard let panel = window, let content = panel.contentView,
               frame.width > 0, frame.height > 0 else { return }

@@ -138,7 +138,7 @@ private struct GeneralSettings: View {
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
                 Toggle("Show Pesty in the menu bar", isOn: $settings.showMenuBarIcon)
                 VStack(alignment: .leading) {
-                    LabeledContent("Bar height", value: "\(Int(settings.barHeight)) px")
+                    LabeledContent("Bar height", value: "\(Int(settings.barHeight)) pt")
                     Slider(value: $settings.barHeight, in: 300...720, step: 10)
                 }
                 Toggle("Show resize handle on the Paste Bar", isOn: $settings.showBarResizeHandle)
@@ -251,9 +251,6 @@ private struct GeneralSettings: View {
             }
         }
         .formStyle(.grouped)
-        .onChange(of: settings.barHeight) { _, height in
-            AppController.shared.previewBarHeight(height)
-        }
         #if !MAS
         .onAppear { accessibilityGranted = AXIsProcessTrusted() }
         .onReceive(poll) { _ in
