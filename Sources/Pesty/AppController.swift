@@ -616,6 +616,17 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return nil
         }
 
+        // Command-Left/Right switch sections even while the search field is
+        // first responder. The panel can hand the field focus as soon as it
+        // becomes key, and its editor would otherwise swallow these as caret
+        // jumps in an empty query. Shift is left alone so Command-Shift-arrow
+        // still selects text in the query.
+        if cmd, !ctrl, !opt, !flags.contains(.shift),
+           code == kVK_LeftArrow || code == kVK_RightArrow {
+            moveBarSection(by: code == kVK_LeftArrow ? -1 : 1)
+            return nil
+        }
+
         // Past the quick-paste digits, the native search field owns the event
         // while it is editing: selection, clipboard commands, deletion, spaces,
         // keyboard layouts, and composed text all need real AppKit
