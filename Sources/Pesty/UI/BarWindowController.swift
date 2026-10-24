@@ -57,7 +57,11 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
     init() {
         let panel = BarPanel(
             contentRect: NSRect(x: 0, y: 0, width: 800, height: 360),
-            styleMask: [.borderless],
+            // Non-activating, so the panel can take key focus even when macOS
+            // refuses to activate Pesty. That happens while another app holds
+            // Secure Event Input (Chrome does for a focused password field):
+            // the panel never became key, and the post-show check hid it.
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false)
         panel.isFloatingPanel = true
