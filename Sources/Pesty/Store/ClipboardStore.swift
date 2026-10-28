@@ -39,7 +39,12 @@ final class ClipboardStore {
     var searchText: String = "" {
         didSet { if searchText != oldValue { clearMultiSelection() } }
     }
-    var selectedID: UUID?
+    var selectedID: UUID? {
+        willSet { selectionIsPointerDriven = false }
+    }
+    /// Mouse selection must leave the card under the pointer for a second
+    /// click. Keyboard and programmatic selection still reposition the strip.
+    private(set) var selectionIsPointerDriven = false
     private(set) var multiSelectedIDs: Set<UUID> = []
     private var selectionAnchorID: UUID?
 
@@ -85,14 +90,16 @@ final class ClipboardStore {
     /// Settings can report how much space history actually uses.
     var dataDirectory: URL { baseDir }
 
-    private init() {
-        let base = (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil) ?? ClipboardStore.localBase
+    init(baseDirectory: URL? = nil) {
+        let base = baseDirectory
+            ?? (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil)
+            ?? ClipboardStore.localBase
         baseDir = base
         imagesDir = base.appendingPathComponent("images", isDirectory: true)
         storeURL = base.appendingPathComponent("store.json")
         prepareDirectories()
         load()
-        if Settings.shared.iCloudSync { startWatching() }
+        if baseDirectory == nil && Settings.shared.iCloudSync { startWatching() }
     }
 
     private func prepareDirectories() {
@@ -533,6 +540,7 @@ final class ClipboardStore {
         selectedID = id
         selectionAnchorID = id
         multiSelectedIDs = []
+        selectionIsPointerDriven = true
     }
 
     func toggleSelection(_ id: UUID) {
@@ -552,6 +560,7 @@ final class ClipboardStore {
             if selectionAnchorID == nil { selectionAnchorID = id }
             if multiSelectedIDs.count == 1 { multiSelectedIDs = [] }
         }
+        selectionIsPointerDriven = true
     }
 
     func extendSelection(to id: UUID) {
@@ -567,6 +576,7 @@ final class ClipboardStore {
         selectedID = id
         selectionAnchorID = anchor
         if multiSelectedIDs.count <= 1 { multiSelectedIDs = [] }
+        selectionIsPointerDriven = true
     }
 
     func clearMultiSelection() {
