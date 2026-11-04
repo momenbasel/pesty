@@ -61,7 +61,7 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
             backing: .buffered,
             defer: false)
         panel.isFloatingPanel = true
-        panel.level = .modalPanel
+        panel.level = NSWindow.Level(rawValue: NSWindow.Level.dock.rawValue + 1)
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = true
@@ -147,12 +147,11 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
     func show() {
         guard let panel = window else { return }
         guard let screen = Self.targetScreen() else { return }
-        panel.level = Settings.shared.hideOnClickOutside ? .modalPanel : .floating
-        // A side Dock reduces visibleFrame's width even in full-screen Spaces.
-        // The strip spans the display; only its vertical bounds avoid system UI.
-        let visible = screen.visibleFrame
-        let vf = NSRect(x: screen.frame.minX, y: visible.minY,
-                        width: screen.frame.width, height: visible.height)
+        // Keep the entire strip above the Dock, including when click-outside
+        // dismissal is disabled. The Dock must not cover clips at the bottom.
+        panel.level = NSWindow.Level(rawValue: NSWindow.Level.dock.rawValue + 1)
+        let vf = BarResizeGeometry.presentationBounds(
+            screenFrame: screen.frame, visibleFrame: screen.visibleFrame)
         let onScreen = BarResizeGeometry.panelFrame(
             for: Settings.shared.barHeight,
             in: vf
