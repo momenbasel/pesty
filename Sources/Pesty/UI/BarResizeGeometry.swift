@@ -7,6 +7,14 @@ enum BarResizeGeometry {
     static let minimumHeight = 300.0
     static let maximumHeight = 720.0
 
+    /// Span the screen's bottom and side edges regardless of Dock placement,
+    /// while retaining the menu-bar clearance at the top of the display.
+    static func presentationBounds(screenFrame: CGRect, visibleFrame: CGRect) -> CGRect {
+        CGRect(x: screenFrame.minX, y: screenFrame.minY,
+               width: screenFrame.width,
+               height: max(0, min(screenFrame.maxY, visibleFrame.maxY) - screenFrame.minY))
+    }
+
     /// Returns a value which is safe to persist independently of the display
     /// the bar happens to be shown on.
     static func normalizedPersistedHeight(_ height: Double) -> Double {
