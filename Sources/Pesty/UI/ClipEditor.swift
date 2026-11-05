@@ -23,10 +23,10 @@ enum ClipEditor {
 
     private static func editColor(_ item: ClipItem) -> Edit? {
         let alert = NSAlert()
-        alert.messageText = "Edit Color"
-        alert.informativeText = "Choose the color stored in this clip."
-        alert.addButton(withTitle: "Save")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = "Edit Color".localized
+        alert.informativeText = "Choose the color stored in this clip.".localized
+        alert.addButton(withTitle: "Save".localized)
+        alert.addButton(withTitle: "Cancel".localized)
 
         let color = item.colorHex.flatMap(NSColor.init(hex:)) ?? .black
         let accessory = ColorEditorAccessoryView(color: color)
@@ -38,9 +38,9 @@ enum ClipEditor {
 
     private static func showUnsupportedEditor(for item: ClipItem) {
         let alert = NSAlert()
-        alert.messageText = "This clip can't be edited"
-        alert.informativeText = "Pesty can edit text, rich text, links, and colors. \(item.type.label) clips are kept as-is."
-        alert.addButton(withTitle: "OK")
+        alert.messageText = "This clip can't be edited".localized
+        alert.informativeText = L("Pesty can edit text, rich text, links, and colors. %@ clips are kept as-is.", item.type.label)
+        alert.addButton(withTitle: "OK".localized)
         alert.runModal()
     }
 }
@@ -99,7 +99,7 @@ private final class TextClipEditorController: NSObject, NSTextViewDelegate, NSWi
 
     private func configurePanel() {
         panel.delegate = self
-        panel.title = "Edit \(item.type.label)"
+        panel.title = L("Edit %@", item.type.label)
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
         panel.isMovableByWindowBackground = true
@@ -148,30 +148,30 @@ private final class TextClipEditorController: NSObject, NSTextViewDelegate, NSWi
         content.translatesAutoresizingMaskIntoConstraints = false
         effect.addSubview(content)
 
-        let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancel))
+        let cancelButton = NSButton(title: "Cancel".localized, target: self, action: #selector(cancel))
         cancelButton.bezelStyle = .rounded
         cancelButton.keyEquivalent = "\u{1b}"
 
-        saveButton.title = "Save"
+        saveButton.title = "Save".localized
         saveButton.target = self
         saveButton.action = #selector(save)
         saveButton.bezelStyle = .rounded
         saveButton.keyEquivalent = "\r"
         saveButton.keyEquivalentModifierMask = [.command]
         saveButton.bezelColor = .controlAccentColor
-        saveButton.toolTip = "Save (⌘↩)"
+        saveButton.toolTip = "Save (⌘↩)".localized
 
         let formatting = NSStackView(views: [
-            toolbarTextButton("B", tooltip: "Bold", action: #selector(toggleBold),
+            toolbarTextButton("B", tooltip: "Bold".localized, action: #selector(toggleBold),
                               font: .systemFont(ofSize: 17, weight: .bold)),
-            toolbarTextButton("I", tooltip: "Italic", action: #selector(toggleItalic),
+            toolbarTextButton("I", tooltip: "Italic".localized, action: #selector(toggleItalic),
                               font: NSFontManager.shared.convert(
                                 .systemFont(ofSize: 17, weight: .semibold),
                                 toHaveTrait: .italicFontMask
                               )),
-            toolbarTextButton("U", tooltip: "Underline", action: #selector(toggleUnderline),
+            toolbarTextButton("U", tooltip: "Underline".localized, action: #selector(toggleUnderline),
                               underline: true),
-            toolbarTextButton("S", tooltip: "Strikethrough", action: #selector(toggleStrikethrough),
+            toolbarTextButton("S", tooltip: "Strikethrough".localized, action: #selector(toggleStrikethrough),
                               strikethrough: true)
         ])
         formatting.orientation = .horizontal
@@ -180,7 +180,7 @@ private final class TextClipEditorController: NSObject, NSTextViewDelegate, NSWi
         if writingToolsAvailable {
             formatting.addArrangedSubview(
                 toolbarSymbolButton(symbol: "pencil.and.scribble",
-                                    tooltip: "Writing Tools",
+                                    tooltip: "Writing Tools".localized,
                                     action: #selector(showWritingTools)))
         }
 
@@ -416,15 +416,15 @@ private final class TextClipEditorController: NSObject, NSTextViewDelegate, NSWi
         let characters = text.count
         let words = text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
         let lines = text.isEmpty ? 0 : text.components(separatedBy: .newlines).count
-        let characterStat = "\(characters) \(countLabel(characters, singular: "character"))"
-        let wordStat = "\(words) \(countLabel(words, singular: "word"))"
-        let lineStat = "\(lines) \(countLabel(lines, singular: "line"))"
+        let characterStat = "\(characters) \(countLabel(characters, singular: "character".localized, plural: "characters".localized))"
+        let wordStat = "\(words) \(countLabel(words, singular: "word".localized, plural: "words".localized))"
+        let lineStat = "\(lines) \(countLabel(lines, singular: "line".localized, plural: "lines".localized))"
         statsLabel.stringValue = [characterStat, wordStat, lineStat].joined(separator: "  ·  ")
         saveButton.isEnabled = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private func countLabel(_ count: Int, singular: String) -> String {
-        count == 1 ? singular : "\(singular)s"
+    private func countLabel(_ count: Int, singular: String, plural: String) -> String {
+        count == 1 ? singular : plural
     }
 
     private func finish(with value: ClipEditor.Edit?) {
@@ -448,7 +448,7 @@ private final class ColorEditorAccessoryView: NSStackView {
         alignment = .centerY
         spacing = 10
 
-        let label = NSTextField(labelWithString: "Color:")
+        let label = NSTextField(labelWithString: "Color:".localized)
         valueLabel.font = .monospacedSystemFont(ofSize: 12, weight: .medium)
         valueLabel.textColor = .secondaryLabelColor
         colorWell.color = color

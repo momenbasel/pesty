@@ -53,9 +53,6 @@ struct BarView: View {
 
     private var topBar: some View {
         HStack(spacing: 14) {
-            // The two builds sync through different systems: the App Store build uses
-            // CloudKit, everything else uses iCloud Drive. Gate the button on whichever
-            // one this build actually drives.
             #if MAS
             if settings.cloudKitSync { syncButton }
             #else
@@ -86,7 +83,7 @@ struct BarView: View {
                 .foregroundStyle(settings.iCloudSync ? Theme.selection : Theme.chromeTextSecondary)
         }
         .buttonStyle(.plain)
-        .help(settings.iCloudSync ? "iCloud sync on" : "Turn on iCloud sync")
+        .help(settings.iCloudSync ? "iCloud sync on".localized : "Turn on iCloud sync".localized)
     }
 
     private var searchIndicator: some View {
@@ -96,9 +93,6 @@ struct BarView: View {
                 .foregroundStyle(searchIsActive ? Theme.chromeTextPrimary : Theme.chromeTextSecondary)
                 .accessibilityHidden(true)
 
-            // Kept mounted even in the compact state: the key monitor can
-            // focus it synchronously and return the same first key event, so
-            // type-anywhere search never loses a character.
             NativeBarSearchField(
                 text: searchTextBinding,
                 bridge: searchBridge,
@@ -124,16 +118,12 @@ struct BarView: View {
                         .font(.system(size: 12)).foregroundStyle(Theme.chromeTextTertiary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Clear search")
+                .accessibilityLabel("Clear search".localized)
             }
         }
         .padding(.horizontal, searchIsActive ? 10 : 0)
         .frame(height: 30)
         .background(searchIsActive ? Theme.fieldBG : Color.clear, in: Capsule())
-        // Without this, the search field competes for space with the
-        // Pinboard tabs' ScrollView in the same HStack and can get squeezed
-        // below its intended width — an active query needs to keep its
-        // requested width over the (infinitely flexible) tab strip.
         .layoutPriority(searchIsActive ? 2 : 0)
         .animation(.easeOut(duration: 0.15), value: searchIsActive)
     }
@@ -143,46 +133,46 @@ struct BarView: View {
         return Button(role: .destructive) {
             AppController.shared.deleteEffectiveSelection()
         } label: {
-            Label("Delete \(count)", systemImage: "trash")
+            Label(L("Delete %d", count), systemImage: "trash")
                 .font(.system(size: 12.5, weight: .medium))
                 .lineLimit(1)
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
         .fixedSize()
-        .help("Delete \(count) selected clips (⌘⌫)")
-        .accessibilityLabel("Delete \(count) selected clips")
+        .help(L("Delete %d selected clips (⌘⌫)", count))
+        .accessibilityLabel(L("Delete %d selected clips", count))
     }
 
     private var undoButton: some View {
         Button {
             store.undoLastDelete()
         } label: {
-            Label("Undo", systemImage: "arrow.uturn.backward")
+            Label("Undo".localized, systemImage: "arrow.uturn.backward")
                 .font(.system(size: 12.5, weight: .medium))
                 .lineLimit(1)
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
         .fixedSize()
-        .help("Undo the last deletion (⌘Z), available for 5 minutes")
-        .accessibilityLabel("Undo last deletion")
+        .help("Undo the last deletion (⌘Z), available for 5 minutes".localized)
+        .accessibilityLabel("Undo last deletion".localized)
     }
 
     private var moreMenu: some View {
         Menu {
             Button { AppController.shared.showSettings() } label: {
-                Label("Settings…", systemImage: "gearshape")
+                Label("Settings…".localized, systemImage: "gearshape")
             }
             Button { store.clearHistory() } label: {
-                Label("Clear History", systemImage: "trash")
+                Label("Clear History".localized, systemImage: "trash")
             }
             Divider()
             Button { AppController.shared.showAbout() } label: {
-                Label("About Pesty", systemImage: "info.circle")
+                Label("About Pesty".localized, systemImage: "info.circle")
             }
             Button { NSApp.terminate(nil) } label: {
-                Label("Quit Pesty", systemImage: "power")
+                Label("Quit Pesty".localized, systemImage: "power")
             }
         } label: {
             Image(systemName: "ellipsis")
@@ -196,9 +186,6 @@ struct BarView: View {
         .fixedSize()
     }
 
-    /// Identifies the padded scroll content, so a presentation reset can land
-    /// on the strip's natural resting offset - anchoring the first card's
-    /// leading edge instead would scroll the horizontal inset out of view.
     private static let stripStartID = "stripStart"
 
     private var strip: some View {
@@ -241,8 +228,6 @@ struct BarView: View {
         .frame(maxHeight: .infinity)
     }
 
-    /// The anchor preference decides whether the strip parks the selected
-    /// card centered or against the right edge, Paste-style.
     private func scrollToSelected(_ id: UUID, proxy: ScrollViewProxy) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
             proxy.scrollTo(id, anchor: settings.selectedClipPosition == .rightEdge ? .trailing : .center)
@@ -255,8 +240,8 @@ struct BarView: View {
                 .font(.system(size: 34, weight: .light))
                 .foregroundStyle(Theme.chromeTextTertiary)
             Text(store.searchText.isEmpty
-                 ? "Nothing copied yet"
-                 : "No matches for “\(store.searchText)”")
+                 ? "Nothing copied yet".localized
+                 : L("No matches for \u{201C}%@\u{201D}", store.searchText))
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.chromeTextSecondary)
         }

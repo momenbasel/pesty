@@ -12,7 +12,7 @@ import Observation
 final class CloudSyncService {
     static let shared = CloudSyncService()
 
-    private(set) var status: String = "Sync is off"
+    private(set) var status: String = "Sync is off".localized
 
     @ObservationIgnored private var engine: CKSyncEngine?
     @ObservationIgnored private var store: ClipboardStore { ClipboardStore.shared }
@@ -46,7 +46,7 @@ final class CloudSyncService {
         if state == nil {
             engine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: CKSchema.zoneID))])
         }
-        status = "Sync is on"
+        status = "Sync is on".localized
         addObservers()
         refreshAccountStatus()
         diffAndEnqueue()
@@ -57,7 +57,7 @@ final class CloudSyncService {
         guard engine != nil else { return }
         removeObservers()
         engine = nil
-        status = "Sync is off"
+        status = "Sync is off".localized
     }
 
     /// Manual enable from Settings. Drops the shadow map first so the next
@@ -78,7 +78,7 @@ final class CloudSyncService {
         try? FileManager.default.removeItem(at: stateURL)
         try? FileManager.default.removeItem(at: systemFieldsDir)
         Settings.shared.cloudKitSync = false
-        status = "iCloud account changed - re-enable sync in Settings"
+        status = "iCloud account changed - re-enable sync in Settings".localized
     }
 
     private func addObservers() {
@@ -103,13 +103,13 @@ final class CloudSyncService {
             guard engine != nil else { return }
             switch account {
             case .available:
-                status = "Sync is on"
+                status = "Sync is on".localized
             case .noAccount:
-                status = "Sign in to iCloud in System Settings to sync"
+                status = "Sign in to iCloud in System Settings to sync".localized
             case .restricted, .temporarilyUnavailable:
-                status = "iCloud account unavailable — sync paused"
+                status = "iCloud account unavailable — sync paused".localized
             default:
-                status = "Checking iCloud account…"
+                status = "Checking iCloud account…".localized
             }
         }
     }
@@ -431,7 +431,7 @@ extension CloudSyncService: CKSyncEngineDelegate {
             }
             if hadRetryableFailure {
                 saveShadow()
-                status = "Some items failed to upload - will retry"
+                status = "Some items failed to upload - will retry".localized
             }
             CKSchema.purgeTempAssets()
 

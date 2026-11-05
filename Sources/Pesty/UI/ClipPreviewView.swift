@@ -45,7 +45,7 @@ struct ClipPreviewView: View {
                     .scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                unavailable("The original image is no longer available.")
+                unavailable("The original image is no longer available.".localized)
             }
         case .color:
             VStack(alignment: .leading, spacing: 12) {
@@ -75,13 +75,13 @@ struct ClipPreviewView: View {
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                unavailable("This clip has no text to preview.")
+                unavailable("This clip has no text to preview.".localized)
             }
         }
     }
 
     private func unavailable(_ message: String) -> some View {
-        ContentUnavailableView("Preview Unavailable",
+        ContentUnavailableView("Preview Unavailable".localized,
                                systemImage: "eye.slash",
                                description: Text(message))
     }

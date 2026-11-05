@@ -1,0 +1,273 @@
+/* Settings tabs */
+"General" = "通用";
+"Privacy" = "隐私";
+"About" = "关于";
+
+/* Language */
+"Language" = "语言";
+"System Default" = "系统默认";
+
+/* Settings – Privacy */
+"Excluded Apps" = "排除的应用";
+"Pesty will not save anything copied while one of these apps is frontmost. Copies made from a browser extension are attributed to the browser, so add that too if you use one." = "当这些应用处于前台时，Pesty 不会记录任何复制的内容。通过浏览器扩展复制的内容会归属于浏览器本身，因此如果你使用了扩展，也请将其添加进来";
+"No apps excluded" = "没有排除的应用";
+"Add an app to keep its copied content out of Pesty." = "添加应用以阻止其复制的内容被 Pesty 记录。";
+"Add App…" = "添加应用…";
+"Allow clips from %@" = "允许来自 %@ 的剪贴内容";
+"Exclude Apps from Pesty" = "从 Pesty 中排除应用";
+"Pesty will ignore copied content from the apps you choose." = "Pesty 将忽略你所选应用中复制的内容。";
+"Add Apps" = "添加应用";
+
+/* Settings – General – Activation */
+"Activation" = "激活";
+"Show Pesty" = "显示 Pesty";
+
+/* Settings – General – History */
+"History" = "历史记录";
+"Limit history by" = "历史限制方式";
+"Number of clips" = "按数量";
+"Age of clips" = "按时间";
+"Keep at most" = "最多保留";
+"%d clips" = "%d 条";
+"Remove clips older than" = "移除早于";
+"History and pinboards on disk" = "磁盘上的历史记录和置顶";
+"Pruning tidies this Mac only — synced copies stay on your other devices. Pinned clips are never removed." = "清理仅影响此 Mac——已同步的副本仍保留在你的其他设备上。置顶的剪贴内容会保留";
+"Pruning applies to this Mac's history. Pinned clips are never removed." = "仅清理此 Mac 的历史记录。置顶的剪贴内容会保留";
+"Remove %d Clips?" = "移除 %d 条？";
+"Remove %d Clips" = "移除 %d 条";
+"Cancel" = "取消";
+"This setting removes %d clips from history on this Mac now, and keeps pruning automatically. Pinboards are not affected, and there is no undo." = "此设置将立即从此 Mac 的历史记录中移除 %d 条剪贴内容，并持续自动清理。置顶板不受影响，且无法撤销。";
+
+/* History retention presets */
+"1 Day" = "1 天";
+"1 Week" = "1 周";
+"2 Weeks" = "2 周";
+"3 Weeks" = "3 周";
+"1 Month" = "1 个月";
+"2 Months" = "2 个月";
+"3 Months" = "3 个月";
+"6 Months" = "6 个月";
+"1 Year" = "1 年";
+"Forever" = "永久";
+
+"1d" = "1天";
+"1w" = "1周";
+"2w" = "2周";
+"3w" = "3周";
+"1m" = "1月";
+"2m" = "2月";
+"3m" = "3月";
+"6m" = "6月";
+"1y" = "1年";
+
+
+/* Settings – General – Quick Paste */
+"Quick Paste" = "快速粘贴";
+"Paste items 1–9" = "粘贴第 1–9 项";
+"+ 1…9" = "+ 1…9";
+"Paste as plain text" = "以纯文本粘贴";
+"Hold the plain-text modifier while using Quick Paste to strip formatting — with the defaults, ⌘⇧1 pastes the first clip as plain text. The two roles can never share a modifier; picking one that is taken swaps them." = "在使用快速粘贴时按住纯文本修饰键可去除格式——使用默认设置时，⌘⇧1 会以纯文本粘贴第一条剪贴内容。两个功能不能共用同一个修饰键；选择已被占用的修饰键会互换两者";
+
+/* Settings – General – Behavior */
+"Behavior" = "行为";
+"Paste directly into the active app" = "直接粘贴到当前应用";
+"Ignore passwords (concealed clips)" = "忽略密码（隐藏内容）";
+"Promote pasted clips to the top of history" = "将已粘贴的内容提升到历史记录顶部";
+"Play sound on paste" = "粘贴时播放音效";
+"Play sound when copying from Pesty" = "从 Pesty 复制时播放音效";
+"Hide Pesty when clicking outside" = "点击面板外时隐藏 Pesty";
+"Launch at login" = "登录时启动";
+"Show Pesty in the menu bar" = "在菜单栏中显示 Pesty";
+"Bar height" = "面板高度";
+"%d pt" = "%d 磅";
+"Show resize handle on the Paste Bar" = "在粘贴栏上显示调整控件";
+"Select a clip to copy it, then press ⌘V to paste it into your app." = "选择一条剪贴内容即可复制，然后按 ⌘V 粘贴到你的应用中";
+
+/* Settings – General – Clip Colors */
+"Clip Colors" = "卡片颜色";
+"Color theme" = "颜色主题";
+"Default" = "默认";
+"Vibrant" = "鲜艳";
+"Accent shades" = "强调色渐变";
+"Match each clip to its source app\u2019s familiar card color." = "使用来源应用的常用卡片颜色";
+"Use a stronger, higher-contrast version of each source app color." = "使用更鲜艳，对比度更高的版本";
+"Give each source app a stable lighter or darker shade of one color." = "使用同一颜色的渐变变体";
+"Base color" = "基准颜色";
+"Preview" = "预览";
+"Ten stable shades of the selected base color" = "所选基准颜色的十种变体";
+"Each source app keeps one of ten deterministic shades, so its cards stay recognizable without drifting too far from your chosen color." = "每个来源使用一种颜色，因此其卡片保持可识别，同时不会偏离你选择的颜色太远";
+
+/* Settings – General – Clip Navigation */
+"Clip Navigation" = "卡片导航";
+"Selected clip position" = "选中卡片位置";
+"Center" = "居中";
+"Right edge" = "靠右";
+"Keep the selected clip centered with surrounding context visible." = "将选中的卡片保持在中心位置，同时显示两侧的卡片";
+"Place the selected clip at the far right, like Paste." = "将选中的卡片放在最右侧，类似 Paste 的风格";
+
+/* Settings – General – Sync */
+"Sync" = "同步";
+"Sync history with iCloud" = "通过 iCloud 同步历史记录";
+"Sync clipboard via iCloud Drive" = "通过 iCloud Drive 同步剪贴板";
+"Keeps your history and pinboards in sync across your Macs through iCloud Drive." = "通过 iCloud Drive 在你的多台 Mac 之间同步历史记录和置顶板";
+"Sign in to iCloud and enable iCloud Drive to use sync." = "登录 iCloud 并启用 iCloud Drive 以使用同步功能";
+
+/* Settings – General – Permissions */
+"Permissions" = "权限";
+"Accessibility" = "辅助功能";
+"Granted — direct paste is enabled." = "已授权——直接粘贴已启用";
+"Waiting… toggle Pesty on in System Settings." = "等待中…请在系统设置中打开 Pesty 的权限";
+"Required to paste directly into other apps." = "用于直接粘贴到其他应用";
+"Open Settings" = "打开设置";
+"Restart Pesty" = "重启 Pesty";
+
+/* Settings – General – Data */
+"Data" = "数据";
+"Delete permanently" = "永久删除";
+"Skips the five-minute Undo window: deleted clips are removed at once and cannot be recovered. Hold Option while deleting to skip Undo for one deletion, whatever this setting says." = "跳过五分钟的撤销窗口：删除的剪贴内容会立即移除且无法恢复。无论此设置如何，删除时按住 Option 键可跳过单次撤销";
+"Clear Clipboard History" = "清除剪贴板历史";
+
+/* Settings – About */
+"Version %@" = "版本 %@\n由henry_ji翻译";
+"A free, open-source clipboard manager for macOS.\nInspired by Paste." = "一款免费、开源的 macOS 剪贴板管理器\n灵感来自 Paste";
+"GitHub" = "GitHub";
+"Report an Issue" = "报告问题";
+"Quit Pesty" = "退出 Pesty";
+"MIT Licensed · Made with SwiftUI" = "MIT 许可 · 使用 SwiftUI 构建";
+
+/* Shortcut modifiers */
+"Command" = "Command";
+"Option" = "Option";
+"Control" = "Control";
+"Shift" = "Shift";
+
+/* Bar view */
+"Delete %d" = "删除 %d";
+"Delete %d selected clips (⌘⌫)" = "删除 %d 条选中的剪贴内容 (⌘⌫)";
+"Delete %d selected clips" = "删除 %d 条选中的剪贴内容";
+"Undo" = "撤销";
+"Undo the last deletion (⌘Z), available for 5 minutes" = "撤销上次删除 (⌘Z)，5 分钟内有效";
+"Undo last deletion" = "撤销上次删除";
+"Settings…" = "设置…";
+"Clear History" = "清除历史";
+"About Pesty" = "关于 Pesty";
+"iCloud sync on" = "iCloud 同步已开启";
+"Turn on iCloud sync" = "开启 iCloud 同步";
+"Clear search" = "清除搜索";
+"Nothing copied yet" = "还没有复制任何内容";
+"No matches for \u201C%@\u201D" = "没有与\u201C%@\u201D匹配的结果";
+
+/* Clip card */
+"%d files" = "%d 个文件";
+"File not found" = "未找到文件";
+"%d characters" = "%d 个字符";
+"Image" = "图片";
+"Color" = "颜色";
+"Paste as Plain Text" = "以纯文本粘贴";
+"Paste with Clean Formatting" = "以简洁格式粘贴";
+"Paste as Markdown" = "以 Markdown 粘贴";
+"Copy" = "复制";
+"Edit" = "编辑";
+"Writing Tools" = "写作工具";
+"Rename…" = "重命名…";
+"No Pinboards Yet" = "还没有置顶板";
+"Create Pinboard…" = "创建置顶板…";
+"Pin" = "置顶";
+"Share" = "分享";
+"Delete" = "删除";
+"Delete %d Clips" = "删除 %d 条";
+"Rename" = "重命名";
+"Card title" = "卡片标题";
+"Create Pinboard" = "创建置顶板";
+"Name" = "名称";
+
+/* Clip editor */
+"Edit Color" = "编辑颜色";
+"Choose the color stored in this clip." = "选择此剪贴内容中存储的颜色";
+"Save" = "保存";
+"This clip can't be edited" = "此剪贴内容无法编辑";
+"Pesty can edit text, rich text, links, and colors. %@ clips are kept as-is." = "Pesty 可以编辑文本、富文本、链接和颜色。%@ 类型的剪贴内容将保持原样";
+"OK" = "好";
+"Edit %@" = "编辑 %@";
+"Save (⌘↩)" = "保存 (⌘↩)";
+"Bold" = "粗体";
+"Italic" = "斜体";
+"Underline" = "下划线";
+"Strikethrough" = "删除线";
+"Color:" = "颜色：";
+"character" = "字符";
+"characters" = "字符";
+"word" = "词";
+"words" = "词";
+"line" = "行";
+"lines" = "行";
+
+/* Clip preview */
+"The original image is no longer available." = "原始图片已不可用";
+"This clip has no text to preview." = "此剪贴内没有可预览的文本";
+"Preview Unavailable" = "预览不可用";
+
+/* Pinboard tabs */
+"Clipboard" = "剪贴板";
+"Double-click or right-click to rename" = "双击或右键点击以重命名";
+"Delete Pinboard" = "删除置顶板";
+"New Pinboard" = "新置顶板";
+"Rename Pinboard" = "重命名置顶板";
+"Enter a new name" = "输入新名称";
+
+/* Copy toast */
+"Copied to Clipboard" = "已复制到剪贴板";
+
+/* Search */
+"Search" = "搜索";
+
+/* Resize handle */
+"Resize Paste Bar" = "调整粘贴栏大小";
+"Drag vertically, or increment and decrement in ten-point steps." = "垂直拖动，或以十磅为步长增减";
+
+/* App controller – menus */
+"Hide Pesty" = "隐藏 Pesty";
+"Redo" = "重做";
+"Cut" = "剪切";
+"Paste" = "粘贴";
+"Select All" = "全选";
+"Find…" = "查找…";
+"Window" = "窗口";
+"Close Window" = "关闭窗口";
+"Minimize" = "最小化";
+"Open Pesty   %@" = "打开 Pesty         %@";
+"Pause Pesty" = "暂停 Pesty";
+"Resume Pesty" = "恢复 Pesty";
+"Pesty" = "Pesty";
+"Pesty Settings" = "Pesty 设置";
+
+/* App controller – alerts and toasts */
+"iCloud Drive Unavailable" = "iCloud Drive 不可用";
+"Sign in to iCloud and enable iCloud Drive in System Settings to sync your clipboard across your Macs." = "登录 iCloud 并在系统设置中启用 iCloud Drive以在你的多台 Mac 之间同步剪贴板";
+"Copied. Grant Accessibility in System Settings to paste directly." = "已复制，请在系统设置中授予辅助功能权限以直接粘贴";
+"Paste to %@" = "粘贴到 %@";
+"Preview — %@" = "预览 — %@";
+"Delete %d Clips?" = "删除 %d 条剪贴内容？";
+"This cannot be undone. When iCloud sync is on, these clips are also removed from your other devices." = "此操作无法撤销，开启 iCloud 同步时，这些剪贴内容也会从你的其他设备上移除";
+"You can undo this with ⌘Z for the next 5 minutes. When iCloud sync is on, these clips are also removed from your other devices." = "你可以在接下来 5 分钟内使用 ⌘Z 撤销，开启 iCloud 同步时，这些剪贴内容也会从你的其他设备上移除";
+"This cannot be undone." = "此操作无法撤销";
+"You can undo this with ⌘Z for the next 5 minutes." = "你可以在接下来 5 分钟内使用 ⌘Z 撤销";
+
+/* Clip types */
+"Text" = "文本";
+"Rich Text" = "富文本";
+"Link" = "链接";
+"File" = "文件";
+
+/* Date / time */
+"Now" = "现在";
+"Just now" = "刚刚";
+
+/* Cloud sync status */
+"Sync is off" = "同步已关闭";
+"Sync is on" = "同步已开启";
+"iCloud account changed - re-enable sync in Settings" = "iCloud 账户已更改——请在设置中重新启用同步";
+"Sign in to iCloud in System Settings to sync" = "请在系统设置中登录 iCloud 以同步";
+"iCloud account unavailable — sync paused" = "iCloud 账户不可用——同步已暂停";
+"Checking iCloud account…" = "正在检查 iCloud 账户…";
+"Some items failed to upload - will retry" = "部分项目上传失败——将重试";
