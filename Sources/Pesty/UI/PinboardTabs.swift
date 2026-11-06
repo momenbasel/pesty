@@ -6,7 +6,7 @@ struct PinboardTabs: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                pill(title: "Clipboard",
+                pill(title: "Clipboard".localized,
                      dot: nil,
                      icon: "clock",
                      selected: store.source == .history) {
@@ -21,10 +21,10 @@ struct PinboardTabs: View {
                     }
                     // Rename lived only in the context menu, which nobody found (#100).
                     .simultaneousGesture(TapGesture(count: 2).onEnded { rename(board) })
-                    .help("Double-click or right-click to rename")
+                    .help("Double-click or right-click to rename".localized)
                     .contextMenu {
-                        Button("Rename…") { rename(board) }
-                        Button("Delete Pinboard", role: .destructive) {
+                        Button("Rename…".localized) { rename(board) }
+                        Button("Delete Pinboard".localized, role: .destructive) {
                             store.deletePinboard(board.id)
                         }
                     }
@@ -38,7 +38,7 @@ struct PinboardTabs: View {
                         .background(Theme.fieldBG, in: Circle())
                 }
                 .buttonStyle(.plain)
-                .help("New Pinboard")
+                .help("New Pinboard".localized)
             }
         }
     }
@@ -69,13 +69,13 @@ struct PinboardTabs: View {
     }
 
     private func addPinboard() {
-        let board = store.addPinboard(name: "New Pinboard")
+        let board = store.addPinboard(name: "New Pinboard".localized)
         store.source = .pinboard(board.id)
     }
 
     private func rename(_ board: Pinboard) {
-        if let name = TextPrompt.run(title: "Rename Pinboard",
-                                     message: "Enter a new name",
+        if let name = TextPrompt.run(title: "Rename Pinboard".localized,
+                                     message: "Enter a new name".localized,
                                      defaultValue: board.name) {
             store.renamePinboard(board.id, to: name)
         }
@@ -90,8 +90,8 @@ enum TextPrompt {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "OK".localized)
+        alert.addButton(withTitle: "Cancel".localized)
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
         field.stringValue = defaultValue
         alert.accessoryView = field

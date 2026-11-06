@@ -766,7 +766,7 @@ final class ClipboardStore {
     private func applyRemoteToPinboard(_ item: ClipItem, boardID: UUID) {
         // Placeholder board if the clip record arrives before its Pinboard record.
         if !pinboards.contains(where: { $0.id == boardID }) {
-            pinboards.append(Pinboard(id: boardID, name: "Pinboard", items: []))
+            pinboards.append(Pinboard(id: boardID, name: "New Pinboard".localized, items: []))
         }
         guard let i = pinboards.firstIndex(where: { $0.id == boardID }) else { return }
         // Legacy shared-id records: a pinboard clip also evicts the same id from history.

@@ -23,6 +23,17 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Pesty"
 cp packaging/Pesty.icns "$APP/Contents/Resources/Pesty.icns"
+
+# Copy localization resources into the app bundle
+for lproj in Sources/Pesty/Resources/*.lproj; do
+    cp -R "$lproj" "$APP/Contents/Resources/"
+done
+
+# Copy SPM resource bundle if it exists (for Bundle.module fallback)
+SPM_BUNDLE="$(dirname "$BIN")/Pesty_Pesty.bundle"
+if [ -d "$SPM_BUNDLE" ]; then
+    cp -R "$SPM_BUNDLE" "$APP/Contents/Resources/"
+fi
 sed -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD/" packaging/Info.plist > "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 cp "$PROFILE" "$APP/Contents/embedded.provisionprofile"

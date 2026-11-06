@@ -129,27 +129,27 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "About Pesty", action: #selector(menuAbout), keyEquivalent: "").target = self
+        appMenu.addItem(withTitle: "About Pesty".localized, action: #selector(menuAbout), keyEquivalent: "").target = self
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Settings…", action: #selector(menuSettings), keyEquivalent: ",").target = self
+        appMenu.addItem(withTitle: "Settings…".localized, action: #selector(menuSettings), keyEquivalent: ",").target = self
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Hide Pesty", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
-        appMenu.addItem(withTitle: "Quit Pesty", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "Hide Pesty".localized, action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: "Quit Pesty".localized, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
         main.addItem(appItem)
 
         let editItem = NSMenuItem()
-        let editMenu = NSMenu(title: "Edit")
-        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
-        let redo = editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        let editMenu = NSMenu(title: "Edit".localized)
+        editMenu.addItem(withTitle: "Undo".localized, action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(withTitle: "Redo".localized, action: Selector(("redo:")), keyEquivalent: "z")
         redo.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(.separator())
-        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenu.addItem(withTitle: "Cut".localized, action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy".localized, action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste".localized, action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All".localized, action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenu.addItem(.separator())
-        let find = editMenu.addItem(withTitle: "Find…",
+        let find = editMenu.addItem(withTitle: "Find…".localized,
                                     action: #selector(NSTextView.performTextFinderAction(_:)),
                                     keyEquivalent: "f")
         find.tag = NSTextFinder.Action.showFindInterface.rawValue
@@ -157,9 +157,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         main.addItem(editItem)
 
         let windowItem = NSMenuItem()
-        let windowMenu = NSMenu(title: "Window")
-        windowMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        windowMenu.addItem(withTitle: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        let windowMenu = NSMenu(title: "Window".localized)
+        windowMenu.addItem(withTitle: "Close Window".localized, action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        windowMenu.addItem(withTitle: "Minimize".localized, action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
         windowItem.submenu = windowMenu
         main.addItem(windowItem)
         NSApp.windowsMenu = windowMenu
@@ -172,18 +172,18 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         updateStatusItemIcon(item)
         let menu = NSMenu()
-        menu.addItem(withTitle: "Open Pesty   \(Settings.shared.hotkeyDisplay)",
+        menu.addItem(withTitle: L("Open Pesty   %@".localized, Settings.shared.hotkeyDisplay),
                      action: #selector(menuOpen), keyEquivalent: "").target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Settings…", action: #selector(menuSettings), keyEquivalent: ",").target = self
-        let pause = menu.addItem(withTitle: "Pause Pesty", action: #selector(menuTogglePause), keyEquivalent: "")
+        menu.addItem(withTitle: "Settings…".localized, action: #selector(menuSettings), keyEquivalent: ",").target = self
+        let pause = menu.addItem(withTitle: "Pause Pesty".localized, action: #selector(menuTogglePause), keyEquivalent: "")
         pause.target = self
         pauseMenuItem = pause
-        menu.addItem(withTitle: "Clear History", action: #selector(menuClear), keyEquivalent: "").target = self
+        menu.addItem(withTitle: "Clear History".localized, action: #selector(menuClear), keyEquivalent: "").target = self
         menu.addItem(.separator())
-        let about = menu.addItem(withTitle: "About Pesty", action: #selector(menuAbout), keyEquivalent: "")
+        let about = menu.addItem(withTitle: "About Pesty".localized, action: #selector(menuAbout), keyEquivalent: "")
         about.target = self
-        menu.addItem(withTitle: "Quit Pesty", action: #selector(menuQuit), keyEquivalent: "q").target = self
+        menu.addItem(withTitle: "Quit Pesty".localized, action: #selector(menuQuit), keyEquivalent: "q").target = self
         item.menu = menu
         statusItem = item
     }
@@ -206,14 +206,14 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func togglePestyPause() {
         monitor.togglePause()
-        pauseMenuItem?.title = monitor.isPaused ? "Resume Pesty" : "Pause Pesty"
+        pauseMenuItem?.title = monitor.isPaused ? "Resume Pesty".localized : "Pause Pesty".localized
         if let item = statusItem { updateStatusItemIcon(item) }
     }
 
     private func updateStatusItemIcon(_ item: NSStatusItem) {
         item.button?.image = NSImage(
             systemSymbolName: monitor.isPaused ? "pause.circle" : "doc.on.clipboard",
-            accessibilityDescription: "Pesty")
+            accessibilityDescription: "Pesty".localized)
         item.button?.image?.isTemplate = true
     }
 
@@ -223,7 +223,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .applicationName: "Pesty",
             .applicationVersion: Bundle.main.appVersion,
             .credits: NSAttributedString(
-                string: "A free, open-source clipboard manager for macOS.\nInspired by Paste.",
+                string: "A free, open-source clipboard manager for macOS.\nInspired by Paste.".localized,
                 attributes: [.font: NSFont.systemFont(ofSize: 11)])
         ])
     }
@@ -232,8 +232,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let enabling = !Settings.shared.iCloudSync
         if enabling && !ClipboardStore.shared.iCloudAvailable {
             let alert = NSAlert()
-            alert.messageText = "iCloud Drive Unavailable"
-            alert.informativeText = "Sign in to iCloud and enable iCloud Drive in System Settings to sync your clipboard across your Macs."
+            alert.messageText = "iCloud Drive Unavailable".localized
+            alert.informativeText = "Sign in to iCloud and enable iCloud Drive in System Settings to sync your clipboard across your Macs.".localized
             alert.runModal()
             return
         }
@@ -397,7 +397,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func noteBlockedDirectPaste() {
         guard !notedBlockedDirectPaste else { return }
         notedBlockedDirectPaste = true
-        copyToast.show(message: "Copied. Grant Accessibility in System Settings to paste directly.",
+        copyToast.show(message: "Copied. Grant Accessibility in System Settings to paste directly.".localized,
                        symbol: "exclamationmark.triangle.fill",
                        linger: 4)
     }
@@ -426,9 +426,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var pasteMenuTitle: String {
         guard let name = pasteTarget?.localizedName,
               !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return "Paste"
+            return "Paste".localized
         }
-        return "Paste to \(name)"
+        return L("Paste to %@", name)
     }
 
     func editItem(_ item: ClipItem, launchWritingTools: Bool = false) {
@@ -454,7 +454,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
 
         let host = NSHostingController(rootView: ClipPreviewView(item: item))
-        let title = "Preview — \(item.displayTitle)"
+        let title = L("Preview — %@", item.displayTitle)
         previewedItemID = item.id
 
         if let window = previewWindow {
@@ -511,20 +511,20 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         suppressAutoHide = true
         defer { suppressAutoHide = false }
         let alert = NSAlert()
-        alert.messageText = "Delete \(targets.count) Clips?"
+        alert.messageText = L("Delete %d Clips?", targets.count)
         let noUndo = permanently || Settings.shared.deletePermanently
         #if MAS
         alert.informativeText = noUndo
-            ? "This cannot be undone. When iCloud sync is on, these clips are also removed from your other devices."
-            : "You can undo this with ⌘Z for the next 5 minutes. When iCloud sync is on, these clips are also removed from your other devices."
+            ? "This cannot be undone. When iCloud sync is on, these clips are also removed from your other devices.".localized
+            : "You can undo this with ⌘Z for the next 5 minutes. When iCloud sync is on, these clips are also removed from your other devices.".localized
         #else
         alert.informativeText = noUndo
-            ? "This cannot be undone."
-            : "You can undo this with ⌘Z for the next 5 minutes."
+            ? "This cannot be undone.".localized
+            : "You can undo this with ⌘Z for the next 5 minutes.".localized
         #endif
-        let confirm = alert.addButton(withTitle: "Delete \(targets.count) Clips")
+        let confirm = alert.addButton(withTitle: L("Delete %d Clips", targets.count))
         confirm.hasDestructiveAction = true
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Cancel".localized)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         store.delete(items: targets, permanently: permanently)
     }
@@ -546,7 +546,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let view = SettingsView()
         let host = NSHostingController(rootView: view)
         let win = NSWindow(contentViewController: host)
-        win.title = "Pesty Settings"
+        win.title = "Pesty Settings".localized
         win.styleMask = [.titled, .closable, .miniaturizable]
         win.setContentSize(NSSize(width: 520, height: 560))
         win.center()

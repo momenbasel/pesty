@@ -76,7 +76,7 @@ struct ClipCardView: View {
     }
 
     private var cardTypeLabel: String {
-        if item.type == .file, item.fileURLs.count > 1 { return "\(item.fileURLs.count) files" }
+        if item.type == .file, item.fileURLs.count > 1 { return L("%d files", item.fileURLs.count) }
         return item.type.label
     }
 
@@ -110,8 +110,6 @@ struct ClipCardView: View {
         .background(Theme.cardBody)
     }
 
-    /// Image clips, and file clips pointing at an image, which is how a copied
-    /// screenshot usually arrives, run edge to edge instead of sitting inset.
     private var showsImage: Bool {
         ClipPreviewProvider.showsImage(item) && !previewFailed
     }
@@ -152,8 +150,6 @@ struct ClipCardView: View {
         }
     }
 
-    /// Over a checkerboard, so a transparent cut-out is distinguishable from
-    /// an image on white.
     private var imageCanvas: some View {
         ZStack {
             CheckerboardBackground()
@@ -185,7 +181,7 @@ struct ClipCardView: View {
                 .foregroundStyle(Theme.cardTextSecondary).lineLimit(2)
                 .multilineTextAlignment(.center)
             if fileInfo?.isMissing == true {
-                Text("File not found")
+                Text("File not found".localized)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Theme.cardTextTertiary)
             }
@@ -222,8 +218,6 @@ struct ClipCardView: View {
                     .foregroundStyle(Theme.cardTextPrimary).lineLimit(1)
             }
             HStack(alignment: .bottom, spacing: 6) {
-                // A path is worth reading in full, so it wraps rather than
-                // collapsing to an ellipsis; everything else stays one line.
                 Text(metaLeft)
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.cardTextSecondary)
@@ -249,8 +243,6 @@ struct ClipCardView: View {
         ClipPreviewProvider.imageFileURL(for: item) != nil
     }
 
-    /// NSHomeDirectory is the sandbox container in the App Store build, so the
-    /// real home comes from the account record instead.
     private static let homePath: String = {
         if let home = getpwuid(getuid())?.pointee.pw_dir { return String(cString: home) }
         return NSHomeDirectory()
@@ -265,7 +257,7 @@ struct ClipCardView: View {
     private var metaLeft: String {
         switch item.type {
         case .text, .richText:
-            return "\(item.charCount) characters"
+            return L("%d characters", item.charCount)
         case .link:
             return (item.text ?? "").replacingOccurrences(of: "https://", with: "")
                                     .replacingOccurrences(of: "http://", with: "")
@@ -276,20 +268,16 @@ struct ClipCardView: View {
                     .compactMap { URL(string: $0)?.lastPathComponent }
                     .joined(separator: ", ")
             }
-            // An image shows what it is, so its size is the useful fact; a
-            // screenshot's path is a timestamped folder nobody reads. Files
-            // without a preview get the full location instead, since two
-            // documents of the same name differ only by where they live.
             if isSingleImageFile {
                 guard let size = ImagePixelSize.of(url) else { return url.lastPathComponent }
                 return "\(Int(size.width)) × \(Int(size.height))"
             }
             return Self.abbreviatedPath(url.path)
         case .image:
-            guard let size = ImagePixelSize.of(item) else { return "Image" }
+            guard let size = ImagePixelSize.of(item) else { return "Image".localized }
             return "\(Int(size.width)) × \(Int(size.height))"
         case .color:
-            return item.colorHex ?? "Color"
+            return item.colorHex ?? "Color".localized
         }
     }
 
@@ -300,46 +288,46 @@ struct ClipCardView: View {
         }
 
         Button { AppController.shared.pasteItem(item, format: .plainText) } label: {
-            Label("Paste as Plain Text", systemImage: "text.alignleft")
+            Label("Paste as Plain Text".localized, systemImage: "text.alignleft")
         }
         .disabled(item.plainText == nil)
 
         Button { AppController.shared.pasteItem(item, format: .cleanFormatting) } label: {
-            Label("Paste with Clean Formatting", systemImage: "paintbrush")
+            Label("Paste with Clean Formatting".localized, systemImage: "paintbrush")
         }
         .disabled(!FormatConverter.canConvert(item))
 
         Button { AppController.shared.pasteItem(item, format: .markdown) } label: {
-            Label("Paste as Markdown", systemImage: "number")
+            Label("Paste as Markdown".localized, systemImage: "number")
         }
         .disabled(!FormatConverter.canConvert(item))
 
         Button { AppController.shared.copyItem(item) } label: {
-            Label("Copy", systemImage: "doc.on.doc")
+            Label("Copy".localized, systemImage: "doc.on.doc")
         }
 
         Divider()
 
         Button { AppController.shared.editItem(item) } label: {
-            Label("Edit", systemImage: "pencil")
+            Label("Edit".localized, systemImage: "pencil")
         }
         .disabled(!isEditable)
 
         if writingToolsAvailable {
             Button { AppController.shared.editItem(item, launchWritingTools: true) } label: {
-                Label("Writing Tools", systemImage: "pencil.and.scribble")
+                Label("Writing Tools".localized, systemImage: "pencil.and.scribble")
             }
         }
 
         Button { renameItem() } label: {
-            Label("Rename…", systemImage: "pencil.line")
+            Label("Rename…".localized, systemImage: "pencil.line")
         }
 
         Divider()
 
         Menu {
             if store.pinboards.isEmpty {
-                Button("No Pinboards Yet") {}
+                Button("No Pinboards Yet".localized) {}
                     .disabled(true)
             } else {
                 ForEach(store.pinboards) { b in
@@ -355,20 +343,20 @@ struct ClipCardView: View {
             }
             Divider()
             Button { pinToNewBoard() } label: {
-                Label("Create Pinboard…", systemImage: "plus")
+                Label("Create Pinboard…".localized, systemImage: "plus")
             }
         } label: {
-            Label("Pin", systemImage: "pin")
+            Label("Pin".localized, systemImage: "pin")
         }
 
         Divider()
 
         Button { AppController.shared.showPreview(for: item) } label: {
-            Label("Preview", systemImage: "eye")
+            Label("Preview".localized, systemImage: "eye")
         }
 
         Button { AppController.shared.showSharePicker(for: item) } label: {
-            Label("Share", systemImage: "square.and.arrow.up")
+            Label("Share".localized, systemImage: "square.and.arrow.up")
         }
 
         Divider()
@@ -382,7 +370,7 @@ struct ClipCardView: View {
 
     private var deleteMenuTitle: String {
         let count = store.multiSelectedIDs.contains(item.id) ? store.multiSelectedIDs.count : 1
-        return count > 1 ? "Delete \(count) Clips" : "Delete"
+        return count > 1 ? L("Delete %d Clips", count) : "Delete".localized
     }
 
     private var isEditable: Bool {
@@ -396,14 +384,14 @@ struct ClipCardView: View {
     }
 
     private func renameItem() {
-        if let title = TextPrompt.run(title: "Rename", message: "Card title",
+        if let title = TextPrompt.run(title: "Rename".localized, message: "Card title".localized,
                                       defaultValue: item.customTitle ?? "") {
             store.setTitle(title, for: item)
         }
     }
 
     private func pinToNewBoard() {
-        if let name = TextPrompt.run(title: "Create Pinboard", message: "Name") {
+        if let name = TextPrompt.run(title: "Create Pinboard".localized, message: "Name".localized) {
             let board = store.addPinboard(name: name)
             store.saveToPinboard(item, boardID: board.id)
         }
@@ -421,9 +409,6 @@ struct ClipCardView: View {
     }
 }
 
-/// The standard transparency checkerboard drawn behind image clips. A Canvas
-/// rather than a tiled image: the pattern is a handful of rects, and this keeps
-/// it resolution independent without shipping an asset.
 private struct CheckerboardBackground: View {
     var square: CGFloat = 8
 
@@ -446,8 +431,6 @@ private struct CheckerboardBackground: View {
     }
 }
 
-/// Reads an image clip's pixel dimensions from the file's metadata instead of
-/// decoding it, and remembers them: the card footer asks on every render.
 @MainActor
 enum ImagePixelSize {
     private static var cache: [String: CGSize?] = [:]

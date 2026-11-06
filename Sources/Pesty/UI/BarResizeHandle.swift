@@ -96,8 +96,8 @@ private final class BarResizeHandleView: NSView, BarResizeHandleResponder {
 
         setAccessibilityElement(true)
         setAccessibilityRole(.slider)
-        setAccessibilityLabel("Resize Paste Bar")
-        setAccessibilityHelp("Drag vertically, or increment and decrement in ten-point steps.")
+        setAccessibilityLabel("Resize Paste Bar".localized)
+        setAccessibilityHelp("Drag vertically, or increment and decrement in ten-point steps.".localized)
         updateAccessibilityValue()
 
         NotificationCenter.default.addObserver(

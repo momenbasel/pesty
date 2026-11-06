@@ -68,13 +68,13 @@ struct ClipItem: Identifiable, Codable, Equatable {
             if let t = text, let url = URL(string: t.trimmingCharacters(in: .whitespacesAndNewlines)) {
                 return url.host ?? t
             }
-            return text ?? "Link"
+            return text ?? "Link".localized
         case .image:
-            return imageFileName != nil ? "Image" : "Image"
+            return imageFileName != nil ? "Image".localized : "Image".localized
         case .file:
-            return fileURLs.first.flatMap { URL(string: $0)?.lastPathComponent } ?? "File"
+            return fileURLs.first.flatMap { URL(string: $0)?.lastPathComponent } ?? "File".localized
         case .color:
-            return colorHex ?? "Color"
+            return colorHex ?? "Color".localized
         default:
             let firstLine = (text ?? "").split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
             return firstLine.isEmpty ? type.label : String(firstLine.prefix(60))

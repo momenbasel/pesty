@@ -11,6 +11,9 @@ let package = Package(
         .executableTarget(
             name: "Pesty",
             path: "Sources/Pesty",
+            resources: [
+                .copy("Resources")
+            ],
             swiftSettings: [
                 .unsafeFlags(["-parse-as-library"])
             ]

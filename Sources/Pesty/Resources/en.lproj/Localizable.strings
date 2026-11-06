@@ -1,0 +1,272 @@
+/* Settings tabs */
+"General" = "General";
+"Privacy" = "Privacy";
+"About" = "About";
+
+/* Language */
+"Language" = "Language";
+"System Default" = "System Default";
+
+/* Settings – Privacy */
+"Excluded Apps" = "Excluded Apps";
+"Pesty will not save anything copied while one of these apps is frontmost. Copies made from a browser extension are attributed to the browser, so add that too if you use one." = "Pesty will not save anything copied while one of these apps is frontmost. Copies made from a browser extension are attributed to the browser, so add that too if you use one.";
+"No apps excluded" = "No apps excluded";
+"Add an app to keep its copied content out of Pesty." = "Add an app to keep its copied content out of Pesty.";
+"Add App…" = "Add App…";
+"Allow clips from %@" = "Allow clips from %@";
+"Exclude Apps from Pesty" = "Exclude Apps from Pesty";
+"Pesty will ignore copied content from the apps you choose." = "Pesty will ignore copied content from the apps you choose.";
+"Add Apps" = "Add Apps";
+
+/* Settings – General – Activation */
+"Activation" = "Activation";
+"Show Pesty" = "Show Pesty";
+
+/* Settings – General – History */
+"History" = "History";
+"Limit history by" = "Limit history by";
+"Number of clips" = "Number of clips";
+"Age of clips" = "Age of clips";
+"Keep at most" = "Keep at most";
+"%d clips" = "%d clips";
+"Remove clips older than" = "Remove clips older than";
+"History and pinboards on disk" = "History and pinboards on disk";
+"Pruning tidies this Mac only — synced copies stay on your other devices. Pinned clips are never removed." = "Pruning tidies this Mac only — synced copies stay on your other devices. Pinned clips are never removed.";
+"Pruning applies to this Mac's history. Pinned clips are never removed." = "Pruning applies to this Mac's history. Pinned clips are never removed.";
+"Remove %d Clips?" = "Remove %d Clips?";
+"Remove %d Clips" = "Remove %d Clips";
+"Cancel" = "Cancel";
+"This setting removes %d clips from history on this Mac now, and keeps pruning automatically. Pinboards are not affected, and there is no undo." = "This setting removes %d clips from history on this Mac now, and keeps pruning automatically. Pinboards are not affected, and there is no undo.";
+
+/* History retention presets */
+"1 Day" = "1 Day";
+"1 Week" = "1 Week";
+"2 Weeks" = "2 Weeks";
+"3 Weeks" = "3 Weeks";
+"1 Month" = "1 Month";
+"2 Months" = "2 Months";
+"3 Months" = "3 Months";
+"6 Months" = "6 Months";
+"1 Year" = "1 Year";
+"Forever" = "Forever";
+
+"1d" = "1d";
+"1w" = "1w";
+"2w" = "2w";
+"3w" = "3w";
+"1m" = "1m";
+"2m" = "2m";
+"3m" = "3m";
+"6m" = "6m";
+"1y" = "1y";
+
+/* Settings – General – Quick Paste */
+"Quick Paste" = "Quick Paste";
+"Paste items 1–9" = "Paste items 1–9";
+"+ 1…9" = "+ 1…9";
+"Paste as plain text" = "Paste as plain text";
+"Hold the plain-text modifier while using Quick Paste to strip formatting — with the defaults, ⌘⇧1 pastes the first clip as plain text. The two roles can never share a modifier; picking one that is taken swaps them." = "Hold the plain-text modifier while using Quick Paste to strip formatting — with the defaults, ⌘⇧1 pastes the first clip as plain text. The two roles can never share a modifier; picking one that is taken swaps them.";
+
+/* Settings – General – Behavior */
+"Behavior" = "Behavior";
+"Paste directly into the active app" = "Paste directly into the active app";
+"Ignore passwords (concealed clips)" = "Ignore passwords (concealed clips)";
+"Promote pasted clips to the top of history" = "Promote pasted clips to the top of history";
+"Play sound on paste" = "Play sound on paste";
+"Play sound when copying from Pesty" = "Play sound when copying from Pesty";
+"Hide Pesty when clicking outside" = "Hide Pesty when clicking outside";
+"Launch at login" = "Launch at login";
+"Show Pesty in the menu bar" = "Show Pesty in the menu bar";
+"Bar height" = "Bar height";
+"%d pt" = "%d pt";
+"Show resize handle on the Paste Bar" = "Show resize handle on the Paste Bar";
+"Select a clip to copy it, then press ⌘V to paste it into your app." = "Select a clip to copy it, then press ⌘V to paste it into your app.";
+
+/* Settings – General – Clip Colors */
+"Clip Colors" = "Clip Colors";
+"Color theme" = "Color theme";
+"Default" = "Default";
+"Vibrant" = "Vibrant";
+"Accent shades" = "Accent shades";
+"Match each clip to its source app\u2019s familiar card color." = "Match each clip to its source app\u2019s familiar card color.";
+"Use a stronger, higher-contrast version of each source app color." = "Use a stronger, higher-contrast version of each source app color.";
+"Give each source app a stable lighter or darker shade of one color." = "Give each source app a stable lighter or darker shade of one color.";
+"Base color" = "Base color";
+"Preview" = "Preview";
+"Ten stable shades of the selected base color" = "Ten stable shades of the selected base color";
+"Each source app keeps one of ten deterministic shades, so its cards stay recognizable without drifting too far from your chosen color." = "Each source app keeps one of ten deterministic shades, so its cards stay recognizable without drifting too far from your chosen color.";
+
+/* Settings – General – Clip Navigation */
+"Clip Navigation" = "Clip Navigation";
+"Selected clip position" = "Selected clip position";
+"Center" = "Center";
+"Right edge" = "Right edge";
+"Keep the selected clip centered with surrounding context visible." = "Keep the selected clip centered with surrounding context visible.";
+"Place the selected clip at the far right, like Paste." = "Place the selected clip at the far right, like Paste.";
+
+/* Settings – General – Sync */
+"Sync" = "Sync";
+"Sync history with iCloud" = "Sync history with iCloud";
+"Sync clipboard via iCloud Drive" = "Sync clipboard via iCloud Drive";
+"Keeps your history and pinboards in sync across your Macs through iCloud Drive." = "Keeps your history and pinboards in sync across your Macs through iCloud Drive.";
+"Sign in to iCloud and enable iCloud Drive to use sync." = "Sign in to iCloud and enable iCloud Drive to use sync.";
+
+/* Settings – General – Permissions */
+"Permissions" = "Permissions";
+"Accessibility" = "Accessibility";
+"Granted — direct paste is enabled." = "Granted — direct paste is enabled.";
+"Waiting… toggle Pesty on in System Settings." = "Waiting… toggle Pesty on in System Settings.";
+"Required to paste directly into other apps." = "Required to paste directly into other apps.";
+"Open Settings" = "Open Settings";
+"Restart Pesty" = "Restart Pesty";
+
+/* Settings – General – Data */
+"Data" = "Data";
+"Delete permanently" = "Delete permanently";
+"Skips the five-minute Undo window: deleted clips are removed at once and cannot be recovered. Hold Option while deleting to skip Undo for one deletion, whatever this setting says." = "Skips the five-minute Undo window: deleted clips are removed at once and cannot be recovered. Hold Option while deleting to skip Undo for one deletion, whatever this setting says.";
+"Clear Clipboard History" = "Clear Clipboard History";
+
+/* Settings – About */
+"Version %@" = "Version %@";
+"A free, open-source clipboard manager for macOS.\nInspired by Paste." = "A free, open-source clipboard manager for macOS.\nInspired by Paste.";
+"GitHub" = "GitHub";
+"Report an Issue" = "Report an Issue";
+"Quit Pesty" = "Quit Pesty";
+"MIT Licensed · Made with SwiftUI" = "MIT Licensed · Made with SwiftUI";
+
+/* Shortcut modifiers */
+"Command" = "Command";
+"Option" = "Option";
+"Control" = "Control";
+"Shift" = "Shift";
+
+/* Bar view */
+"Delete %d" = "Delete %d";
+"Delete %d selected clips (⌘⌫)" = "Delete %d selected clips (⌘⌫)";
+"Delete %d selected clips" = "Delete %d selected clips";
+"Undo" = "Undo";
+"Undo the last deletion (⌘Z), available for 5 minutes" = "Undo the last deletion (⌘Z), available for 5 minutes";
+"Undo last deletion" = "Undo last deletion";
+"Settings…" = "Settings…";
+"Clear History" = "Clear History";
+"About Pesty" = "About Pesty";
+"iCloud sync on" = "iCloud sync on";
+"Turn on iCloud sync" = "Turn on iCloud sync";
+"Clear search" = "Clear search";
+"Nothing copied yet" = "Nothing copied yet";
+"No matches for \u201C%@\u201D" = "No matches for \u201C%@\u201D";
+
+/* Clip card */
+"%d files" = "%d files";
+"File not found" = "File not found";
+"%d characters" = "%d characters";
+"Image" = "Image";
+"Color" = "Color";
+"Paste as Plain Text" = "Paste as Plain Text";
+"Paste with Clean Formatting" = "Paste with Clean Formatting";
+"Paste as Markdown" = "Paste as Markdown";
+"Copy" = "Copy";
+"Edit" = "Edit";
+"Writing Tools" = "Writing Tools";
+"Rename…" = "Rename…";
+"No Pinboards Yet" = "No Pinboards Yet";
+"Create Pinboard…" = "Create Pinboard…";
+"Pin" = "Pin";
+"Share" = "Share";
+"Delete" = "Delete";
+"Delete %d Clips" = "Delete %d Clips";
+"Rename" = "Rename";
+"Card title" = "Card title";
+"Create Pinboard" = "Create Pinboard";
+"Name" = "Name";
+
+/* Clip editor */
+"Edit Color" = "Edit Color";
+"Choose the color stored in this clip." = "Choose the color stored in this clip.";
+"Save" = "Save";
+"This clip can't be edited" = "This clip can't be edited";
+"Pesty can edit text, rich text, links, and colors. %@ clips are kept as-is." = "Pesty can edit text, rich text, links, and colors. %@ clips are kept as-is.";
+"OK" = "OK";
+"Edit %@" = "Edit %@";
+"Save (⌘↩)" = "Save (⌘↩)";
+"Bold" = "Bold";
+"Italic" = "Italic";
+"Underline" = "Underline";
+"Strikethrough" = "Strikethrough";
+"Color:" = "Color:";
+"character" = "character";
+"characters" = "characters";
+"word" = "word";
+"words" = "words";
+"line" = "line";
+"lines" = "lines";
+
+/* Clip preview */
+"The original image is no longer available." = "The original image is no longer available.";
+"This clip has no text to preview." = "This clip has no text to preview.";
+"Preview Unavailable" = "Preview Unavailable";
+
+/* Pinboard tabs */
+"Clipboard" = "Clipboard";
+"Double-click or right-click to rename" = "Double-click or right-click to rename";
+"Delete Pinboard" = "Delete Pinboard";
+"New Pinboard" = "New Pinboard";
+"Rename Pinboard" = "Rename Pinboard";
+"Enter a new name" = "Enter a new name";
+
+/* Copy toast */
+"Copied to Clipboard" = "Copied to Clipboard";
+
+/* Search */
+"Search" = "Search";
+
+/* Resize handle */
+"Resize Paste Bar" = "Resize Paste Bar";
+"Drag vertically, or increment and decrement in ten-point steps." = "Drag vertically, or increment and decrement in ten-point steps.";
+
+/* App controller – menus */
+"Hide Pesty" = "Hide Pesty";
+"Redo" = "Redo";
+"Cut" = "Cut";
+"Paste" = "Paste";
+"Select All" = "Select All";
+"Find…" = "Find…";
+"Window" = "Window";
+"Close Window" = "Close Window";
+"Minimize" = "Minimize";
+"Open Pesty   %@" = "Open Pesty   %@";
+"Pause Pesty" = "Pause Pesty";
+"Resume Pesty" = "Resume Pesty";
+"Pesty" = "Pesty";
+"Pesty Settings" = "Pesty Settings";
+
+/* App controller – alerts and toasts */
+"iCloud Drive Unavailable" = "iCloud Drive Unavailable";
+"Sign in to iCloud and enable iCloud Drive in System Settings to sync your clipboard across your Macs." = "Sign in to iCloud and enable iCloud Drive in System Settings to sync your clipboard across your Macs.";
+"Copied. Grant Accessibility in System Settings to paste directly." = "Copied. Grant Accessibility in System Settings to paste directly.";
+"Paste to %@" = "Paste to %@";
+"Preview — %@" = "Preview — %@";
+"Delete %d Clips?" = "Delete %d Clips?";
+"This cannot be undone. When iCloud sync is on, these clips are also removed from your other devices." = "This cannot be undone. When iCloud sync is on, these clips are also removed from your other devices.";
+"You can undo this with ⌘Z for the next 5 minutes. When iCloud sync is on, these clips are also removed from your other devices." = "You can undo this with ⌘Z for the next 5 minutes. When iCloud sync is on, these clips are also removed from your other devices.";
+"This cannot be undone." = "This cannot be undone.";
+"You can undo this with ⌘Z for the next 5 minutes." = "You can undo this with ⌘Z for the next 5 minutes.";
+
+/* Clip types */
+"Text" = "Text";
+"Rich Text" = "Rich Text";
+"Link" = "Link";
+"File" = "File";
+
+/* Date / time */
+"Now" = "Now";
+"Just now" = "Just now";
+
+/* Cloud sync status */
+"Sync is off" = "Sync is off";
+"Sync is on" = "Sync is on";
+"iCloud account changed - re-enable sync in Settings" = "iCloud account changed - re-enable sync in Settings";
+"Sign in to iCloud in System Settings to sync" = "Sign in to iCloud in System Settings to sync";
+"iCloud account unavailable — sync paused" = "iCloud account unavailable — sync paused";
+"Checking iCloud account…" = "Checking iCloud account…";
+"Some items failed to upload - will retry" = "Some items failed to upload - will retry";
