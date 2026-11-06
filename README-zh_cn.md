@@ -17,7 +17,7 @@
 
 <a href="https://apps.apple.com/us/app/pesty-clipboard-manager/id6784511397"><img src="https://tools.applemediaservices.com/api/badges/download-on-the-mac-app-store/black/en-us?size=250x83" alt="Download Pesty on the Mac App Store" height="56" /></a>
 
-<sub>Pesty **免费开源**。在 Mac App Store 里付费帮我我们支付 Apple Developer Program 的费用以保证软件被 Apple 认证。无需支付即可通过 [Homebrew](#install) or [直接下载](https://github.com/momenbasel/pesty/releases/latest)来完全免费地获得本软件。</sub>
+<sub>Pesty **免费开源**。在 Mac App Store 里付费帮我我们支付 Apple Developer Program 的费用以保证软件被 Apple 认证。无需支付即可通过 [Homebrew](#install) 或 [直接下载](https://github.com/momenbasel/pesty/releases/latest) 来完全免费地获得本软件。</sub>
 
 <img src="/Users/henry_ji/Documents/pesty/docs/assets/demo.gif" width="820" alt="Pesty clipboard manager demo - color-coded clipboard strip with keyboard navigation on macOS" />
 
