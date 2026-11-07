@@ -4,7 +4,14 @@ import SwiftUI
 
 /// Lets the Paste Bar's local key monitor leave Escape and drag-time keys to
 /// the handle while it temporarily owns first-responder status.
-protocol BarResizeHandleResponder: AnyObject {}
+@MainActor
+protocol BarResizeHandleResponder: AnyObject {
+    /// True only while a resize drag is in progress. The key monitor must not
+    /// hand the bar's keys to the handle outside a drag: if the handle ever
+    /// holds first responder without tracking, every key (arrows, Escape,
+    /// Return, letters) would be swallowed and only beep.
+    var isTrackingDrag: Bool { get }
+}
 
 /// A compact drag target for resizing the Paste Bar vertically.
 ///
@@ -82,11 +89,14 @@ private final class BarResizeHandleView: NSView, BarResizeHandleResponder {
         didSet { updateAccessibilityValue() }
     }
 
-    private var isTrackingDrag = false
+    var isTrackingDrag = false
     private var ownsResizeCursor = false
     private weak var previousFirstResponder: NSResponder?
 
-    override var acceptsFirstResponder: Bool { true }
+    // Being first responder means owning every key the Paste Bar receives, so
+    // only become one for the duration of a drag (mouseDown sets the flag
+    // before asking the window for focus).
+    override var acceptsFirstResponder: Bool { isTrackingDrag }
     override var intrinsicContentSize: NSSize { NSSize(width: 42, height: 14) }
 
     init(callbacks: Callbacks, accessibilityValue: CGFloat?) {
@@ -202,10 +212,18 @@ private final class BarResizeHandleView: NSView, BarResizeHandleResponder {
             ownsResizeCursor = false
         }
         // If the previous responder refuses, the window itself takes over;
-        // the handle must never keep the bar's keys after a drag.
-        if let window, window.firstResponder === self,
-           !window.makeFirstResponder(previousFirstResponder) {
-            window.makeFirstResponder(nil)
+        // the handle must never keep the bar's keys after a drag. Restoring to
+        // the handle itself would re-trap the keys when the handle already
+        // owned focus before the drag, so that case also falls back to the
+        // window.
+        if let window, window.firstResponder === self {
+            let restored: Bool
+            if let previousFirstResponder, previousFirstResponder !== self {
+                restored = window.makeFirstResponder(previousFirstResponder)
+            } else {
+                restored = window.makeFirstResponder(nil)
+            }
+            if !restored { window.makeFirstResponder(nil) }
         }
         previousFirstResponder = nil
     }
