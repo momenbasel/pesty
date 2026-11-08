@@ -144,12 +144,24 @@ final class ClipboardStore {
         return visibleItems.first(where: { $0.id == id })
     }
 
-    /// The newest clip takes the selection only while the strip is showing
-    /// history with no active narrowing. Otherwise the new clip may not be
-    /// visible, and selecting an invisible card would strand Return and the
-    /// arrow keys on a clip the user cannot see.
-    private var followsNewestClip: Bool {
-        source == .history && searchText.isEmpty && typeFilter == nil && multiSelectedIDs.isEmpty
+    /// Whether a captured clip should take the selection.
+    ///
+    /// The newest clip takes it only while the strip shows unfiltered history:
+    /// under an active filter or query the new clip may not be visible, and
+    /// selecting an invisible card would strand Return and the arrow keys on a
+    /// clip the user cannot see.
+    ///
+    /// The exception is a narrowed list that has no valid selection left. A
+    /// capture that matches the narrowing has just repopulated the strip, and
+    /// leaving nothing selected would make Return and Command-C silent no-ops
+    /// on cards the user can see (PR #115 review).
+    private func selectsCaptured(_ item: ClipItem) -> Bool {
+        guard source == .history, multiSelectedIDs.isEmpty else { return false }
+        if searchText.isEmpty && typeFilter == nil { return true }
+        let hasVisibleSelection = selectedID.map { id in
+            visibleItems.contains { $0.id == id }
+        } ?? false
+        return !hasVisibleSelection && visibleItems.contains { $0.id == item.id }
     }
 
     func addCaptured(_ item: ClipItem) {
@@ -158,7 +170,7 @@ final class ClipboardStore {
             var existing = history.remove(at: idx)
             existing.createdAt = item.createdAt
             history.insert(existing, at: 0)
-            if followsNewestClip {
+            if selectsCaptured(existing) {
                 selectedID = existing.id
                 selectionAnchorID = existing.id
             }
@@ -167,7 +179,7 @@ final class ClipboardStore {
         }
         history.insert(item, at: 0)
         trimHistory()
-        if followsNewestClip {
+        if selectsCaptured(item) {
             selectedID = item.id
             selectionAnchorID = item.id
         }
