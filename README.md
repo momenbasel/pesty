@@ -39,6 +39,7 @@ It is a faithful, native reimplementation of the Paste experience - built in **S
 - **Pinboards** - save clips you reuse into named, color-tagged collections that never expire.
 - **iCloud sync** - optionally keep your history and pinboards in sync across your Macs via iCloud Drive.
 - **Instant search** - start typing to filter your whole history.
+- **Quick type filters** - a row of one-click chips under the bar narrows the strip to text, rich text, links, images, files, or colors, and composes with search and pinboards (Finder-copied image files appear under File). `⌘⇧F` cycles them from the keyboard.
 - **Keyboard-first** - arrow keys to move, `return` to paste, `⌘1`–`⌘9` to quick-paste, `⌫` or `⌘⌫` to delete, `esc` to close.
 - **Paste directly** - drops the clip into the app you were using, no manual `⌘V` needed.
 - **Privacy-aware** - ignores clips marked concealed by password managers; history stored with `0600` permissions.
@@ -75,12 +76,13 @@ The build is signed with a Developer ID and notarized by Apple, so it opens with
 | `⌘⇧V` | Show / hide the strip (configurable) |
 | `⌘⇧S` (with strip open) | Open Settings |
 | `⌘⇧P` (with strip open) | Pause / resume clipboard monitoring |
+| `⌘⇧F` (with strip open) | Cycle the clip-type filter through the types present: All → … → All |
 | `←` `→` `↑` `↓` | Move selection |
 | `return` | Paste selected clip |
 | `⌘1`–`⌘9` (configurable) | Quick-paste the Nth clip; add the plain-text modifier (default `⇧`) to paste unformatted |
 | `⌫` (search empty) or `⌘⌫` | Delete selected clip |
 | type anything | Search |
-| `esc` | Clear search, then close |
+| `esc` | Clear selection, then search, then filter; close when none |
 
 ## Build from source
 

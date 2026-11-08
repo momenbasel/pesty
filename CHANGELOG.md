@@ -4,6 +4,19 @@ All notable changes to Pesty are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- The Paste Bar can be filtered by clip type - text, rich text, links, images,
+  files, and colors - with a row of one-click chips under the top bar. The
+  filter composes with text search and pinboards, types the current collection
+  does not contain are disabled, and Command-Shift-F cycles the filter from the
+  keyboard. Escape clears the filter before closing the bar.
+
+### Changed
+- The Paste Bar's minimum height is now 330 pt (was 300 pt) so the type-filter
+  row does not squeeze the clip cards on a compact bar.
+
 ## [1.3.0] - 2026-10-08
 
 The v2 wave of features from @alvst (#80), each reviewed and landed with the

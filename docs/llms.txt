@@ -10,9 +10,9 @@
 - Download: https://github.com/momenbasel/pesty/releases/latest
 
 ## Features
-Pesty supports text, rich text, links, images, files, and colors. It includes editable search, named pinboards, image previews, clip editing, plain-text and Markdown pasting, drag-and-drop, multi-select, history retention by count or age, and five-minute undo for clip deletion.
+Pesty supports text, rich text, links, images, files, and colors. It includes editable search, one-click content-type filters, named pinboards, image previews, clip editing, plain-text and Markdown pasting, drag-and-drop, multi-select, history retention by count or age, and five-minute undo for clip deletion.
 
-Default shortcut: Shift-Command-V. Arrows select clips; Return chooses a clip; Command-1 through Command-9 choose the first nine clips. Shortcuts can be configured.
+Default shortcut: Shift-Command-V. Arrows select clips; Return chooses a clip; Command-1 through Command-9 choose the first nine clips. Command-Shift-F cycles the content-type filter (All, then each type present in the current collection). Shortcuts can be configured.
 
 ## Editions and privacy
 The direct-download and Homebrew builds are free. They can paste directly with Accessibility permission. iCloud Drive sync is optional and off by default.
