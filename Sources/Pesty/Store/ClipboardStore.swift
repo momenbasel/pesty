@@ -47,6 +47,12 @@ final class ClipboardStore {
             guard typeFilter != oldValue else { return }
             clearMultiSelection()
             selectFirst()
+            // `clearMultiSelection()` anchors range selection on the old
+            // `selectedID`, but after narrowing that clip may not even be in
+            // the list. Re-anchor on the clip selected now, so Shift-click
+            // extends from the top of the filtered list instead of silently
+            // ranging from the pre-filter selection (PR #115 review).
+            selectionAnchorID = selectedID
         }
     }
     var selectedID: UUID?
