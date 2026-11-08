@@ -4,7 +4,10 @@ import CoreGraphics
 /// live-resize interaction.
 enum BarResizeGeometry {
     static let defaultHeight = 430.0
-    static let minimumHeight = 300.0
+    // Raised from 300 when the type-filter row joined the bar chrome: the row
+    // plus the reduced strip padding otherwise left compact File cards with too
+    // little room for their icon and path.
+    static let minimumHeight = 330.0
     static let maximumHeight = 720.0
 
     /// Returns a value which is safe to persist independently of the display

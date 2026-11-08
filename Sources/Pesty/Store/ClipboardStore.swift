@@ -39,6 +39,22 @@ final class ClipboardStore {
     var searchText: String = "" {
         didSet { if searchText != oldValue { clearMultiSelection() } }
     }
+    /// The content-type narrowing applied on top of the current source, or nil
+    /// for every type. Like the search query it lives for one presentation of
+    /// the bar: opening the strip always starts unfiltered.
+    var typeFilter: ClipType? {
+        didSet {
+            guard typeFilter != oldValue else { return }
+            clearMultiSelection()
+            selectFirst()
+            // `clearMultiSelection()` anchors range selection on the old
+            // `selectedID`, but after narrowing that clip may not even be in
+            // the list. Re-anchor on the clip selected now, so Shift-click
+            // extends from the top of the filtered list instead of silently
+            // ranging from the pre-filter selection (PR #115 review).
+            selectionAnchorID = selectedID
+        }
+    }
     var selectedID: UUID?
     private(set) var multiSelectedIDs: Set<UUID> = []
     private var selectionAnchorID: UUID?
@@ -102,22 +118,50 @@ final class ClipboardStore {
         try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: baseDir.path)
     }
 
-    var visibleItems: [ClipItem] {
-        let base: [ClipItem]
+    /// The clips of the collection currently on screen, before any narrowing.
+    var sourceItems: [ClipItem] {
         switch source {
         case .history:
-            base = history
+            return history
         case .pinboard(let id):
-            base = pinboards.first(where: { $0.id == id })?.items ?? []
+            return pinboards.first(where: { $0.id == id })?.items ?? []
         }
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !q.isEmpty else { return base }
-        return base.filter { $0.searchableText.contains(q) }
+    }
+
+    /// How many clips of each content type the current collection holds. The
+    /// filter chips use this to stay off types that have nothing to show.
+    var typeCounts: [ClipType: Int] { ClipFilter.typeCounts(in: sourceItems) }
+
+    /// Types present in the current collection, in canonical order.
+    var availableTypes: [ClipType] { ClipFilter.availableTypes(in: sourceItems) }
+
+    var visibleItems: [ClipItem] {
+        ClipFilter.applying(type: typeFilter, searchText: searchText, to: sourceItems)
     }
 
     var selectedItem: ClipItem? {
         guard let id = selectedID else { return nil }
         return visibleItems.first(where: { $0.id == id })
+    }
+
+    /// Whether a captured clip should take the selection.
+    ///
+    /// The newest clip takes it only while the strip shows unfiltered history:
+    /// under an active filter or query the new clip may not be visible, and
+    /// selecting an invisible card would strand Return and the arrow keys on a
+    /// clip the user cannot see.
+    ///
+    /// The exception is a narrowed list that has no valid selection left. A
+    /// capture that matches the narrowing has just repopulated the strip, and
+    /// leaving nothing selected would make Return and Command-C silent no-ops
+    /// on cards the user can see (PR #115 review).
+    private func selectsCaptured(_ item: ClipItem) -> Bool {
+        guard source == .history, multiSelectedIDs.isEmpty else { return false }
+        if searchText.isEmpty && typeFilter == nil { return true }
+        let hasVisibleSelection = selectedID.map { id in
+            visibleItems.contains { $0.id == id }
+        } ?? false
+        return !hasVisibleSelection && visibleItems.contains { $0.id == item.id }
     }
 
     func addCaptured(_ item: ClipItem) {
@@ -126,7 +170,7 @@ final class ClipboardStore {
             var existing = history.remove(at: idx)
             existing.createdAt = item.createdAt
             history.insert(existing, at: 0)
-            if source == .history && searchText.isEmpty && multiSelectedIDs.isEmpty {
+            if selectsCaptured(existing) {
                 selectedID = existing.id
                 selectionAnchorID = existing.id
             }
@@ -135,7 +179,7 @@ final class ClipboardStore {
         }
         history.insert(item, at: 0)
         trimHistory()
-        if source == .history && searchText.isEmpty && multiSelectedIDs.isEmpty {
+        if selectsCaptured(item) {
             selectedID = item.id
             selectionAnchorID = item.id
         }
@@ -519,6 +563,12 @@ final class ClipboardStore {
 
     func selectFirst() { selectedID = visibleItems.first?.id }
 
+    /// Advances the content-type filter from the keyboard (⌘⇧F): All, then
+    /// each type the current collection actually holds, then All again.
+    func cycleTypeFilter() {
+        typeFilter = ClipFilter.nextTypeFilter(after: typeFilter, available: availableTypes)
+    }
+
     var effectiveSelectionIDs: Set<UUID> {
         if !multiSelectedIDs.isEmpty { return multiSelectedIDs }
         return selectedID.map { [$0] } ?? []
@@ -589,6 +639,9 @@ final class ClipboardStore {
 
     func prepareForBarPresentation() {
         applyRetentionPolicy()
+        // Every presentation starts from the full, unfiltered history - the
+        // same contract the search query follows in `AppController.showBar`.
+        typeFilter = nil
         clearMultiSelection()
         barPresentationToken &+= 1
         selectFirst()
