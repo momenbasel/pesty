@@ -361,8 +361,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func pasteSelected() {
-        guard let item = store.selectedItem else { return }
-        pasteItem(item)
+        pasteItems(store.selectedItems)
     }
 
     /// The app that will receive a paste after the floating Pesty panel closes.
@@ -388,6 +387,39 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if Settings.shared.promoteOnPaste, NSPasteboard.general.changeCount != previousChange {
             store.promoteCopiedItem(item)
         }
+    }
+
+    /// Pastes a whole selection in strip order. `ClipComposer` decides how:
+    /// text goes out joined in one paste, images and mixed selections one
+    /// clip after another.
+    func pasteItems(_ items: [ClipItem], format: PasteFormat = .original) {
+        guard items.count > 1 else {
+            if let item = items.first { pasteItem(item, format: format) }
+            return
+        }
+        let steps = ClipComposer.steps(for: items, format: format)
+        guard !steps.isEmpty else { return }
+        let target = pasteTarget
+        hideBar()
+        let previousChange = NSPasteboard.general.changeCount
+        PasteService.paste(steps, into: target, monitor: monitor)
+        if Settings.shared.promoteOnPaste, NSPasteboard.general.changeCount != previousChange {
+            store.promoteCopiedItems(items)
+        }
+    }
+
+    /// What a card's context-menu command acts on: the whole multi-selection
+    /// when the card is part of it, otherwise that card alone.
+    func selection(containing item: ClipItem) -> [ClipItem] {
+        store.multiSelectedIDs.contains(item.id) ? store.selectedItems : [item]
+    }
+
+    func pasteSelection(containing item: ClipItem, format: PasteFormat = .original) {
+        pasteItems(selection(containing: item), format: format)
+    }
+
+    func copySelection(containing item: ClipItem) {
+        copyItems(selection(containing: item))
     }
 
     #if !MAS
@@ -418,17 +450,36 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         hideBar()
     }
 
-    func copySelected() {
-        guard let item = store.selectedItem else { return }
-        copyItem(item)
+    /// Copies a whole selection in strip order. Text lands as one joined
+    /// string; anything `ClipComposer` cannot merge is written as separate
+    /// pasteboard items.
+    func copyItems(_ items: [ClipItem]) {
+        guard items.count > 1 else {
+            if let item = items.first { copyItem(item) }
+            return
+        }
+        let previousChange = NSPasteboard.general.changeCount
+        let change = PasteService.copy(ClipComposer.steps(for: items))
+        monitor.suppressUntilChangeCount = change
+        if change != previousChange {
+            store.promoteCopiedItems(items)
+            copyToast.show(message: "Copied \(items.count) Clips")
+        }
+        if Settings.shared.playSoundOnCopy { NSSound(named: "Tink")?.play() }
+        hideBar()
     }
 
-    var pasteMenuTitle: String {
+    func copySelected() {
+        copyItems(store.selectedItems)
+    }
+
+    func pasteMenuTitle(clipCount: Int = 1) -> String {
+        let verb = clipCount > 1 ? "Paste \(clipCount) Clips" : "Paste"
         guard let name = pasteTarget?.localizedName,
               !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return "Paste"
+            return verb
         }
-        return "Paste to \(name)"
+        return "\(verb) to \(name)"
     }
 
     func editItem(_ item: ClipItem, launchWritingTools: Bool = false) {
@@ -604,6 +655,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let cmd = flags.contains(.command)
         let ctrl = flags.contains(.control)
         let opt = flags.contains(.option)
+        let shift = flags.contains(.shift)
 
         if let digit = Self.quickPasteDigit(for: code),
            includes(Settings.shared.quickPasteModifier, in: flags) {
@@ -637,15 +689,15 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         case kVK_Return, kVK_ANSI_KeypadEnter:
             pasteSelected(); return nil
         case kVK_LeftArrow:
-            if cmd { moveBarSection(by: -1) } else { store.moveSelection(by: -1) }
+            if cmd { moveBarSection(by: -1) } else { moveBarSelection(by: -1, extending: shift) }
             return nil
         case kVK_RightArrow:
-            if cmd { moveBarSection(by: 1) } else { store.moveSelection(by: 1) }
+            if cmd { moveBarSection(by: 1) } else { moveBarSelection(by: 1, extending: shift) }
             return nil
         case kVK_UpArrow:
-            store.moveSelection(by: -1); return nil
+            moveBarSelection(by: -1, extending: shift); return nil
         case kVK_DownArrow:
-            store.moveSelection(by: 1); return nil
+            moveBarSelection(by: 1, extending: shift); return nil
         case kVK_Delete:
             if cmd { deleteEffectiveSelection(permanently: opt); return nil }
             // Backspace edits the query before it can remove a filtered clip,
@@ -702,6 +754,16 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return nil
         }
         return event
+    }
+
+    /// A bare arrow moves the selection and drops any multi-selection; with
+    /// Shift it extends the selection from its anchor instead.
+    private func moveBarSelection(by delta: Int, extending: Bool) {
+        if extending {
+            store.extendSelection(by: delta)
+        } else {
+            store.moveSelection(by: delta)
+        }
     }
 
     /// Cycles the same sources, in the same order, that the tab bar presents.

@@ -85,8 +85,14 @@ final class ClipboardStore {
     /// Settings can report how much space history actually uses.
     var dataDirectory: URL { baseDir }
 
-    private init() {
-        let base = (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil) ?? ClipboardStore.localBase
+    private convenience init() {
+        self.init(baseDirectory: (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil)
+            ?? ClipboardStore.localBase)
+    }
+
+    /// The app only ever uses `shared`; tests build a store on a scratch
+    /// directory so they never read or write the real history.
+    init(baseDirectory base: URL) {
         baseDir = base
         imagesDir = base.appendingPathComponent("images", isDirectory: true)
         storeURL = base.appendingPathComponent("store.json")
@@ -156,6 +162,14 @@ final class ClipboardStore {
         // A Pinboard card with no history twin: history gets its own copy, as
         // it would from any other app's copy, never the pinboard's UUID.
         addCaptured(independentCopy(of: item, createdAt: date))
+    }
+
+    /// Promotes a multi-clip paste or copy as a block: the clips end up at the
+    /// front of history in the order they were given.
+    func promoteCopiedItems(_ items: [ClipItem], at date: Date = .now) {
+        for (offset, item) in items.reversed().enumerated() {
+            promoteCopiedItem(item, at: date.addingTimeInterval(Double(offset) * 0.001))
+        }
     }
 
     func applyRetentionPolicy() { trimHistory(); scheduleSave() }
@@ -517,11 +531,23 @@ final class ClipboardStore {
         scheduleSave()
     }
 
-    func selectFirst() { selectedID = visibleItems.first?.id }
+    /// Also resets the anchor: a range extended after the selection jumped to
+    /// the first clip must start there, not wherever the anchor was left.
+    func selectFirst() {
+        selectedID = visibleItems.first?.id
+        selectionAnchorID = selectedID
+    }
 
     var effectiveSelectionIDs: Set<UUID> {
         if !multiSelectedIDs.isEmpty { return multiSelectedIDs }
         return selectedID.map { [$0] } ?? []
+    }
+
+    /// The effective selection in the order the strip shows it, which is the
+    /// order a multi-clip paste or copy delivers it in.
+    var selectedItems: [ClipItem] {
+        let selection = effectiveSelectionIDs
+        return visibleItems.filter { selection.contains($0.id) }
     }
 
     func isSelected(_ id: UUID) -> Bool {
@@ -569,6 +595,19 @@ final class ClipboardStore {
         if multiSelectedIDs.count <= 1 { multiSelectedIDs = [] }
     }
 
+    /// Shift-arrow: moves the free end of the selection one clip over while
+    /// the anchor stays put, so the range grows away from the anchor and
+    /// shrinks back toward it the way a Finder list does.
+    func extendSelection(by delta: Int) {
+        let items = visibleItems
+        guard !items.isEmpty else { return }
+        guard let id = selectedID, let idx = items.firstIndex(where: { $0.id == id }) else {
+            selectFirst(); return
+        }
+        let next = max(0, min(items.count - 1, idx + delta))
+        extendSelection(to: items[next].id)
+    }
+
     func clearMultiSelection() {
         multiSelectedIDs = []
         selectionAnchorID = selectedID
@@ -599,7 +638,7 @@ final class ClipboardStore {
         let items = visibleItems
         guard !items.isEmpty else { return }
         guard let id = selectedID, let idx = items.firstIndex(where: { $0.id == id }) else {
-            selectedID = items.first?.id; return
+            selectFirst(); return
         }
         let next = max(0, min(items.count - 1, idx + delta))
         selectedID = items[next].id
