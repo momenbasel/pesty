@@ -3,8 +3,8 @@
 > A free, open-source clipboard manager for macOS with a color-coded strip, searchable history, pinboards, and keyboard navigation.
 
 ## Current direct release
-- Version: 1.3.0
-- Release notes: https://github.com/momenbasel/pesty/releases/tag/v1.3.0
+- Version: 1.4.0
+- Release notes: https://github.com/momenbasel/pesty/releases/tag/v1.4.0
 - Requirements: macOS 14 Sonoma or later, Apple Silicon or Intel
 - License: MIT
 - Download: https://github.com/momenbasel/pesty/releases/latest

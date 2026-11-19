@@ -35,7 +35,7 @@
   "description": "Pesty is a free, open-source clipboard manager for macOS - a native Paste-app alternative with color-coded clipboard history, pinboards, instant search, and keyboard-driven pasting.",
   "applicationCategory": "ProductivityApplication",
   "operatingSystem": "macOS 14.0 or later",
-  "softwareVersion": "1.3.0",
+  "softwareVersion": "1.4.0",
   "downloadUrl": "https://github.com/momenbasel/pesty/releases/latest",
   "url": "https://www.moamenbasel.com/pesty/",
   "image": "https://www.moamenbasel.com/pesty/assets/og-image.png",
@@ -68,7 +68,7 @@
     <a href="assets/screenshot-strip.png" aria-label="View the Pesty clipboard screenshot at full size"><img id="preview" src="assets/screenshot-strip.webp" srcset="assets/screenshot-strip-small.webp 1180w, assets/screenshot-strip.webp 2360w" sizes="(max-width: 767px) calc(100vw - 36px), (max-width: 1184px) calc(100vw - 64px), 1120px" alt="Pesty clipboard strip with color-coded text, link, code, color and email clips" width="2360" height="812" fetchpriority="high" /></a>
     <figcaption><span>Find your clips by content, color, or the app they came from.</span><button class="text-button" id="demo-toggle" type="button" aria-pressed="false" hidden>Play demo</button></figcaption>
   </figure>
-  <div class="requirements" aria-label="Requirements and release"><span>macOS 14 Sonoma or later</span><span>Apple Silicon &amp; Intel</span><a href="https://github.com/momenbasel/pesty/releases/tag/v1.3.0">What's new in 1.3.0</a></div>
+  <div class="requirements" aria-label="Requirements and release"><span>macOS 14 Sonoma or later</span><span>Apple Silicon &amp; Intel</span><a href="https://github.com/momenbasel/pesty/releases/tag/v1.4.0">What's new in 1.4.0</a></div>
 
   <section id="features" class="section" aria-labelledby="features-title">
     <h2 id="features-title">Your useful stuff, within reach.</h2>
@@ -103,7 +103,7 @@ brew install --cask momenbasel/pesty/pesty</code></pre><button class="text-butto
 
   <section id="faq" class="section faq" aria-labelledby="faq-title"><h2 id="faq-title">A few useful answers.</h2>
     <details><summary>Is Pesty free?</summary><p>Yes. Download the app from GitHub or install it with Homebrew for free, under the MIT license. The Mac App Store edition has an optional one-time purchase and different paste and sync behavior.</p></details>
-    <details><summary>What changed in version 1.3?</summary><p>Image previews, an editable search field, clip editing, drag-and-drop, multi-select, retention controls, and undo for deletions. See the <a href="https://github.com/momenbasel/pesty/releases/tag/v1.3.0">release notes</a> for the full list.</p></details>
+    <details><summary>What changed in version 1.4?</summary><p>Paste or copy a whole multi-selection, filter the Paste Bar by clip type, and use Pesty in Simplified Chinese. Card clicks select at once and the bar stays open over Chrome password fields. See the <a href="https://github.com/momenbasel/pesty/releases/tag/v1.4.0">release notes</a> for the full list.</p></details>
     <details><summary>Why does pasting ask for Accessibility?</summary><p>The direct and Homebrew builds use Accessibility permission to paste into another app. If you prefer, disable direct pasting and use <kbd>⌘V</kbd> yourself. The sandboxed Mac App Store edition uses this copy-and-switch flow without Accessibility permission.</p></details>
     <details><summary>Does it save passwords?</summary><p>Clips marked concealed or transient are skipped. Pesty cannot recognize every sensitive value, so exclude sensitive apps in Settings → Privacy or pause capture before copying something private.</p></details>
     <details><summary>Can I sync between the two editions?</summary><p>The direct build uses iCloud Drive, while the Mac App Store build uses CloudKit. They use separate sync systems. Use the same edition on your Macs for shared history.</p></details>

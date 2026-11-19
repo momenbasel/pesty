@@ -4,7 +4,7 @@ All notable changes to Pesty are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.4.0] - 2026-11-19
 
 ### Added
 - Return, Command-C and the card menu paste or copy the whole multi-selection
@@ -32,6 +32,8 @@ All notable changes to Pesty are documented here. The format is based on
   Paste Bar key until relaunch. (#113, #112)
 - The bar opens on the cards the first time it is shown, so Command-Left/Right
   and Command-C act on the strip instead of an empty search. (#116, #105)
+
+[1.4.0]: https://github.com/momenbasel/pesty/releases/tag/v1.4.0
 
 ## [1.3.0] - 2026-10-08
 
