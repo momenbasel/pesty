@@ -21,10 +21,10 @@ enum ShortcutModifier: CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .command: return "Command"
-        case .option: return "Option"
-        case .control: return "Control"
-        case .shift: return "Shift"
+        case .command: return String(localized: "Command")
+        case .option: return String(localized: "Option")
+        case .control: return String(localized: "Control")
+        case .shift: return String(localized: "Shift")
         }
     }
 
@@ -53,8 +53,8 @@ enum HistoryRetentionMode: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .itemCount: return "Number of clips"
-        case .timeInterval: return "Age of clips"
+        case .itemCount: return String(localized: "Number of clips")
+        case .timeInterval: return String(localized: "Age of clips")
         }
     }
 }
@@ -95,16 +95,16 @@ enum HistoryRetentionPreset: Int, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .day: return "1 Day"
-        case .week: return "1 Week"
-        case .twoWeeks: return "2 Weeks"
-        case .threeWeeks: return "3 Weeks"
-        case .month: return "1 Month"
-        case .twoMonths: return "2 Months"
-        case .threeMonths: return "3 Months"
-        case .sixMonths: return "6 Months"
-        case .year: return "1 Year"
-        case .forever: return "Forever"
+        case .day: return String(localized: "1 Day")
+        case .week: return String(localized: "1 Week")
+        case .twoWeeks: return String(localized: "2 Weeks")
+        case .threeWeeks: return String(localized: "3 Weeks")
+        case .month: return String(localized: "1 Month")
+        case .twoMonths: return String(localized: "2 Months")
+        case .threeMonths: return String(localized: "3 Months")
+        case .sixMonths: return String(localized: "6 Months")
+        case .year: return String(localized: "1 Year")
+        case .forever: return String(localized: "Forever")
         }
     }
 
@@ -147,20 +147,20 @@ enum ClipColorTheme: Int, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .default: "Default"
-        case .vibrant: "Vibrant"
-        case .accentShades: "Accent shades"
+        case .default: String(localized: "Default")
+        case .vibrant: String(localized: "Vibrant")
+        case .accentShades: String(localized: "Accent shades")
         }
     }
 
     var detail: String {
         switch self {
         case .default:
-            "Match each clip to its source app\u{2019}s familiar card color."
+            String(localized: "Match each clip to its source app\u{2019}s familiar card color.")
         case .vibrant:
-            "Use a stronger, higher-contrast version of each source app color."
+            String(localized: "Use a stronger, higher-contrast version of each source app color.")
         case .accentShades:
-            "Give each source app a stable lighter or darker shade of one color."
+            String(localized: "Give each source app a stable lighter or darker shade of one color.")
         }
     }
 }
@@ -173,15 +173,15 @@ enum SelectedClipPosition: Int, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .center: "Center"
-        case .rightEdge: "Right edge"
+        case .center: String(localized: "Center")
+        case .rightEdge: String(localized: "Right edge")
         }
     }
 
     var detail: String {
         switch self {
-        case .center: "Keep the selected clip centered with surrounding context visible."
-        case .rightEdge: "Place the selected clip at the far right, like Paste."
+        case .center: String(localized: "Keep the selected clip centered with surrounding context visible.")
+        case .rightEdge: String(localized: "Place the selected clip at the far right, like Paste.")
         }
     }
 }

@@ -8,6 +8,13 @@
     <string>Pesty</string>
     <key>CFBundleIdentifier</key>
     <string>com.greycorelabs.pesty</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hans</string>
+    </array>
     <key>CFBundleExecutable</key>
     <string>Pesty</string>
     <key>CFBundleIconFile</key>

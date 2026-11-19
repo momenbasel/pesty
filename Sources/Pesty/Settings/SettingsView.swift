@@ -71,9 +71,9 @@ private struct PrivacySettings: View {
 
     private func chooseApps() {
         let panel = NSOpenPanel()
-        panel.title = "Exclude Apps from Pesty"
-        panel.message = "Pesty will ignore copied content from the apps you choose."
-        panel.prompt = "Add Apps"
+        panel.title = String(localized: "Exclude Apps from Pesty")
+        panel.message = String(localized: "Pesty will ignore copied content from the apps you choose.")
+        panel.prompt = String(localized: "Add Apps")
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = true
@@ -139,7 +139,7 @@ private struct GeneralSettings: View {
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
                 Toggle("Show Pesty in the menu bar", isOn: $settings.showMenuBarIcon)
                 VStack(alignment: .leading) {
-                    LabeledContent("Bar height", value: "\(Int(settings.barHeight)) pt")
+                    LabeledContent("Bar height", value: String(localized: "\(Int(settings.barHeight)) pt"))
                     // The geometry owns the portable range; keep the slider in
                     // sync with it instead of repeating the numbers here.
                     Slider(value: $settings.barHeight,
@@ -313,7 +313,7 @@ private struct HistoryRetentionSettings: View {
     private var storageSummary: String {
         let store = ClipboardStore.shared
         let count = store.history.count + store.pinboards.reduce(0) { $0 + $1.items.count }
-        let clips = "\(count) clip\(count == 1 ? "" : "s")"
+        let clips = count == 1 ? String(localized: "\(count) clip") : String(localized: "\(count) clips")
         guard let storageBytes else { return clips }
         return "\(clips) · \(ByteCountFormatter.string(fromByteCount: storageBytes, countStyle: .file))"
     }
@@ -350,7 +350,7 @@ private struct HistoryRetentionSettings: View {
             .pickerStyle(.segmented)
             if draftMode == .itemCount {
                 Stepper(value: $draftLimit, in: 50...5000, step: 50) {
-                    LabeledContent("Keep at most", value: "\(draftLimit) clips")
+                    LabeledContent("Keep at most", value: String(localized: "\(draftLimit) clips"))
                 }
             }
         } header: {
@@ -411,9 +411,9 @@ private struct HistoryRetentionSettings: View {
 
     private var footnote: String {
         #if MAS
-        "Pruning tidies this Mac only — synced copies stay on your other devices. Pinned clips are never removed."
+        String(localized: "Pruning tidies this Mac only — synced copies stay on your other devices. Pinned clips are never removed.")
         #else
-        "Pruning applies to this Mac's history. Pinned clips are never removed."
+        String(localized: "Pruning applies to this Mac's history. Pinned clips are never removed.")
         #endif
     }
 

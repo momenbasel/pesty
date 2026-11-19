@@ -77,7 +77,7 @@ struct ClipCardView: View {
     }
 
     private var cardTypeLabel: String {
-        if item.type == .file, item.fileURLs.count > 1 { return "\(item.fileURLs.count) files" }
+        if item.type == .file, item.fileURLs.count > 1 { return String(localized: "\(item.fileURLs.count) files") }
         return item.type.label
     }
 
@@ -266,7 +266,7 @@ struct ClipCardView: View {
     private var metaLeft: String {
         switch item.type {
         case .text, .richText:
-            return "\(item.charCount) characters"
+            return String(localized: "\(item.charCount) characters")
         case .link:
             return (item.text ?? "").replacingOccurrences(of: "https://", with: "")
                                     .replacingOccurrences(of: "http://", with: "")
@@ -287,10 +287,10 @@ struct ClipCardView: View {
             }
             return Self.abbreviatedPath(url.path)
         case .image:
-            guard let size = ImagePixelSize.of(item) else { return "Image" }
+            guard let size = ImagePixelSize.of(item) else { return String(localized: "Image") }
             return "\(Int(size.width)) × \(Int(size.height))"
         case .color:
-            return item.colorHex ?? "Color"
+            return item.colorHex ?? String(localized: "Color")
         }
     }
 
@@ -389,7 +389,7 @@ struct ClipCardView: View {
 
     private var deleteMenuTitle: String {
         let count = store.multiSelectedIDs.contains(item.id) ? store.multiSelectedIDs.count : 1
-        return count > 1 ? "Delete \(count) Clips" : "Delete"
+        return count > 1 ? String(localized: "Delete \(count) Clips") : String(localized: "Delete")
     }
 
     private var isEditable: Bool {
@@ -403,14 +403,14 @@ struct ClipCardView: View {
     }
 
     private func renameItem() {
-        if let title = TextPrompt.run(title: "Rename", message: "Card title",
+        if let title = TextPrompt.run(title: String(localized: "Rename"), message: String(localized: "Card title"),
                                       defaultValue: item.customTitle ?? "") {
             store.setTitle(title, for: item)
         }
     }
 
     private func pinToNewBoard() {
-        if let name = TextPrompt.run(title: "Create Pinboard", message: "Name") {
+        if let name = TextPrompt.run(title: String(localized: "Create Pinboard"), message: String(localized: "Name")) {
             let board = store.addPinboard(name: name)
             store.saveToPinboard(item, boardID: board.id)
         }

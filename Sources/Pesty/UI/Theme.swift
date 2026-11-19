@@ -37,11 +37,11 @@ extension Date {
     var clipRelative: String {
         let secs = -timeIntervalSinceNow
         switch secs {
-        case ..<5:        return "Now"
-        case ..<60:       return "\(Int(secs))s"
-        case ..<3600:     return "\(Int(secs / 60))m"
-        case ..<86_400:   return "\(Int(secs / 3600))h"
-        case ..<604_800:  return "\(Int(secs / 86_400))d"
+        case ..<5:        return String(localized: "Now")
+        case ..<60:       return String(localized: "\(Int(secs))s")
+        case ..<3600:     return String(localized: "\(Int(secs / 60))m")
+        case ..<86_400:   return String(localized: "\(Int(secs / 3600))h")
+        case ..<604_800:  return String(localized: "\(Int(secs / 86_400))d")
         default:
             let f = DateFormatter()
             f.dateFormat = "MMM d"
@@ -51,7 +51,7 @@ extension Date {
 
     var clipRelativeLong: String {
         let secs = -timeIntervalSinceNow
-        if secs < 8 { return "Just now" }
+        if secs < 8 { return String(localized: "Just now") }
         let f = RelativeDateTimeFormatter()
         f.unitsStyle = .full
         return f.localizedString(for: self, relativeTo: Date())

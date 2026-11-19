@@ -287,16 +287,16 @@ struct BarView: View {
         let filteredType = store.typeFilter
         if !query.isEmpty {
             if let filteredType {
-                return "No \(filteredType.label.lowercased()) matches for “\(query)”"
+                return String(localized: "No \(filteredType.label.lowercased()) matches for “\(query)”")
             }
-            return "No matches for “\(query)”"
+            return String(localized: "No matches for “\(query)”")
         }
         // A filter can only narrow a collection that has clips; when everything
         // is gone, "Nothing copied yet" is the truthful state.
         if let filteredType, !store.sourceItems.isEmpty {
-            return "No \(filteredType.label.lowercased()) clips in this collection"
+            return String(localized: "No \(filteredType.label.lowercased()) clips in this collection")
         }
-        return "Nothing copied yet"
+        return String(localized: "Nothing copied yet")
     }
 }
 

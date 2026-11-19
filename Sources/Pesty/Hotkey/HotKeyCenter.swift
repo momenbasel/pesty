@@ -98,7 +98,7 @@ final class HotKeyCenter {
             kVK_ANSI_0: "0", kVK_ANSI_1: "1", kVK_ANSI_2: "2", kVK_ANSI_3: "3",
             kVK_ANSI_4: "4", kVK_ANSI_5: "5", kVK_ANSI_6: "6", kVK_ANSI_7: "7",
             kVK_ANSI_8: "8", kVK_ANSI_9: "9",
-            kVK_Space: "Space", kVK_Return: "↩", kVK_Escape: "⎋",
+            kVK_Space: String(localized: "Space"), kVK_Return: "↩", kVK_Escape: "⎋",
             kVK_ANSI_Period: ".", kVK_ANSI_Comma: ",", kVK_ANSI_Slash: "/"
         ]
         return map[keyCode] ?? "?"

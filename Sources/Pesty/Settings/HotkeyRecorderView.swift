@@ -11,7 +11,7 @@ struct HotkeyRecorderView: View {
         Button {
             recording ? stop() : start()
         } label: {
-            Text(recording ? "Press keys…" : settings.hotkeyDisplay)
+            Text(recording ? String(localized: "Press keys…") : settings.hotkeyDisplay)
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .frame(minWidth: 90)
                 .padding(.horizontal, 12).padding(.vertical, 5)

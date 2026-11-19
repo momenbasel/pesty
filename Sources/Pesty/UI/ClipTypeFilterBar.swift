@@ -11,7 +11,7 @@ struct ClipTypeFilterBar: View {
     @Bindable private var store = ClipboardStore.shared
 
     private var filterDescription: String {
-        store.typeFilter.map { "\($0.label) clips" } ?? "All clip types"
+        store.typeFilter.map { String(localized: "\($0.label) clips") } ?? String(localized: "All clip types")
     }
 
     var body: some View {
@@ -21,14 +21,14 @@ struct ClipTypeFilterBar: View {
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ClipTypeFilterChip(
-                    title: "All Types",
+                    title: String(localized: "All Types"),
                     icon: "line.3.horizontal.decrease.circle",
                     accent: Theme.selection,
                     selected: store.typeFilter == nil,
                     enabled: true,
-                    help: "Show every clip type (⌘⇧F cycles)",
-                    accessibilityLabel: "All clip types",
-                    accessibilityHint: "Show every clip type") {
+                    help: String(localized: "Show every clip type (⌘⇧F cycles)"),
+                    accessibilityLabel: String(localized: "All clip types"),
+                    accessibilityHint: String(localized: "Show every clip type")) {
                     store.typeFilter = nil
                 }
 
@@ -44,10 +44,10 @@ struct ClipTypeFilterBar: View {
                         // a stranded filter can always be tapped off again.
                         enabled: count > 0 || store.typeFilter == type,
                         help: helpText(for: type, count: count),
-                        accessibilityLabel: "Show only \(type.label.lowercased()) clips",
+                        accessibilityLabel: String(localized: "Show only \(type.label.lowercased()) clips"),
                         accessibilityHint: count > 0 || store.typeFilter == type
-                            ? "Show only \(type.label.lowercased()) clips"
-                            : "No clips of this type in this collection") {
+                            ? String(localized: "Show only \(type.label.lowercased()) clips")
+                            : String(localized: "No clips of this type in this collection")) {
                         // Clicking the selected type again returns to All, so
                         // the filter can be dismissed without aiming at a
                         // second chip.
@@ -66,12 +66,14 @@ struct ClipTypeFilterBar: View {
 
     private func helpText(for type: ClipType, count: Int) -> String {
         let availability = count > 0
-            ? "Show only \(type.label.lowercased()) clips (\(count))"
-            : "No \(type.label.lowercased()) clips in this collection"
+            ? String(localized: "Show only \(type.label.lowercased()) clips (\(count))")
+            : String(localized: "No \(type.label.lowercased()) clips in this collection")
         // "Image" is the image *data* kind; Finder-copied image files are
         // recorded as File clips and are not included here.
         guard type == .image else { return availability }
-        return availability + ". Copied image files count as File clips."
+        return count > 0
+            ? String(localized: "Show only image clips (\(count)). Copied image files count as File clips.")
+            : String(localized: "No image clips in this collection. Copied image files count as File clips.")
     }
 }
 

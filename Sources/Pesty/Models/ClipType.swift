@@ -10,12 +10,12 @@ enum ClipType: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .text:     return "Text"
-        case .richText: return "Rich Text"
-        case .link:     return "Link"
-        case .image:    return "Image"
-        case .file:     return "File"
-        case .color:    return "Color"
+        case .text:     return String(localized: "Text")
+        case .richText: return String(localized: "Rich Text")
+        case .link:     return String(localized: "Link")
+        case .image:    return String(localized: "Image")
+        case .file:     return String(localized: "File")
+        case .color:    return String(localized: "Color")
         }
     }
 

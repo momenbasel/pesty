@@ -6,7 +6,7 @@ struct PinboardTabs: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                pill(title: "Clipboard",
+                pill(title: String(localized: "Clipboard"),
                      dot: nil,
                      icon: "clock",
                      selected: store.source == .history) {
@@ -69,13 +69,13 @@ struct PinboardTabs: View {
     }
 
     private func addPinboard() {
-        let board = store.addPinboard(name: "New Pinboard")
+        let board = store.addPinboard(name: String(localized: "New Pinboard"))
         store.source = .pinboard(board.id)
     }
 
     private func rename(_ board: Pinboard) {
-        if let name = TextPrompt.run(title: "Rename Pinboard",
-                                     message: "Enter a new name",
+        if let name = TextPrompt.run(title: String(localized: "Rename Pinboard"),
+                                     message: String(localized: "Enter a new name"),
                                      defaultValue: board.name) {
             store.renamePinboard(board.id, to: name)
         }
@@ -90,8 +90,8 @@ enum TextPrompt {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "OK"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
         field.stringValue = defaultValue
         alert.accessoryView = field

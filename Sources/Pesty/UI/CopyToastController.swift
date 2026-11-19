@@ -25,7 +25,7 @@ final class CopyToastController {
     }
 
     /// A notice sized to its text; the default is the plain copy confirmation.
-    func show(message: String = "Copied to Clipboard",
+    func show(message: String = String(localized: "Copied to Clipboard"),
               symbol: String = "checkmark.circle.fill",
               linger: TimeInterval = 1.25) {
         dismissWorkItem?.cancel()

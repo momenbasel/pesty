@@ -43,6 +43,7 @@ It is a faithful, native reimplementation of the Paste experience - built in **S
 - **Keyboard-first** - arrow keys to move, `return` to paste, `⌘1`–`⌘9` to quick-paste, `⌫` or `⌘⌫` to delete, `esc` to close.
 - **Paste directly** - drops the clip into the app you were using, no manual `⌘V` needed.
 - **Privacy-aware** - ignores clips marked concealed by password managers; history stored with `0600` permissions.
+- **English and Simplified Chinese** - follows the system language; pick one for Pesty alone in System Settings > General > Language & Region > Applications.
 - **Menu-bar app** - runs quietly as a menu-bar item, optional launch at login.
 - **Native & light** - a single universal `.app`, no Electron, no background web stack.
 
