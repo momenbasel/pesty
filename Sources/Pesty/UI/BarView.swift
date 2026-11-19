@@ -229,7 +229,7 @@ struct BarView: View {
                 }
             }
             .onChange(of: store.selectedID) { _, id in
-                guard let id else { return }
+                guard let id, !store.selectionIsPointerDriven else { return }
                 scrollToSelected(id, proxy: proxy)
             }
             .onChange(of: settings.selectedClipPosition) { _, _ in

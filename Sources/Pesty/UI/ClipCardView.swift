@@ -44,10 +44,11 @@ struct ClipCardView: View {
         .animation(.easeOut(duration: 0.14), value: hovering)
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
-        .onTapGesture(count: 2) { AppController.shared.pasteItem(item) }
-        .onTapGesture { store.select(item.id) }
-        .highPriorityGesture(TapGesture().modifiers(.shift).onEnded { store.extendSelection(to: item.id) })
-        .highPriorityGesture(TapGesture().modifiers(.command).onEnded { store.toggleSelection(item.id) })
+        .modifier(ClipCardInteractions(
+            select: { store.select(item.id) },
+            extendSelection: { store.extendSelection(to: item.id) },
+            toggleSelection: { store.toggleSelection(item.id) },
+            paste: { AppController.shared.pasteItem(item) }))
         .onDrag { ClipDragProvider.make(for: item) }
         .contextMenu { menu }
         .task(id: item.id) { await loadPreview() }
