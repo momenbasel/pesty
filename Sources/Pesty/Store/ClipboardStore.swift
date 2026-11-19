@@ -39,7 +39,12 @@ final class ClipboardStore {
     var searchText: String = "" {
         didSet { if searchText != oldValue { clearMultiSelection() } }
     }
-    var selectedID: UUID?
+    var selectedID: UUID? {
+        willSet { selectionIsPointerDriven = false }
+    }
+    /// Mouse selection must leave the card under the pointer for a second
+    /// click. Keyboard and programmatic selection still reposition the strip.
+    private(set) var selectionIsPointerDriven = false
     private(set) var multiSelectedIDs: Set<UUID> = []
     private var selectionAnchorID: UUID?
 
@@ -85,20 +90,16 @@ final class ClipboardStore {
     /// Settings can report how much space history actually uses.
     var dataDirectory: URL { baseDir }
 
-    private convenience init() {
-        self.init(baseDirectory: (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil)
-            ?? ClipboardStore.localBase)
-    }
-
-    /// The app only ever uses `shared`; tests build a store on a scratch
-    /// directory so they never read or write the real history.
-    init(baseDirectory base: URL) {
+    init(baseDirectory: URL? = nil) {
+        let base = baseDirectory
+            ?? (Settings.shared.iCloudSync ? ClipboardStore.iCloudBase : nil)
+            ?? ClipboardStore.localBase
         baseDir = base
         imagesDir = base.appendingPathComponent("images", isDirectory: true)
         storeURL = base.appendingPathComponent("store.json")
         prepareDirectories()
         load()
-        if Settings.shared.iCloudSync { startWatching() }
+        if baseDirectory == nil && Settings.shared.iCloudSync { startWatching() }
     }
 
     private func prepareDirectories() {
@@ -559,6 +560,7 @@ final class ClipboardStore {
         selectedID = id
         selectionAnchorID = id
         multiSelectedIDs = []
+        selectionIsPointerDriven = true
     }
 
     func toggleSelection(_ id: UUID) {
@@ -578,6 +580,7 @@ final class ClipboardStore {
             if selectionAnchorID == nil { selectionAnchorID = id }
             if multiSelectedIDs.count == 1 { multiSelectedIDs = [] }
         }
+        selectionIsPointerDriven = true
     }
 
     func extendSelection(to id: UUID) {
@@ -593,6 +596,7 @@ final class ClipboardStore {
         selectedID = id
         selectionAnchorID = anchor
         if multiSelectedIDs.count <= 1 { multiSelectedIDs = [] }
+        selectionIsPointerDriven = true
     }
 
     /// Shift-arrow: moves the free end of the selection one clip over while
