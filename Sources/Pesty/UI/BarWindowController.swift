@@ -179,6 +179,11 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
 
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
+        // The first time a panel becomes key, AppKit hands first responder to
+        // its only key view: the search field. The bar always opens on the
+        // cards, so take it back; left there, Command-C, Command-arrow and
+        // Shift-arrow edit an empty query instead of acting on the strip.
+        searchBridge.resign()
 
         // The panel keeps its first responder across orderOut, so a resize
         // drag that ended without returning focus would hand every key of the
