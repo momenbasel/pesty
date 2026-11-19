@@ -7,15 +7,31 @@ All notable changes to Pesty are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- Return, Command-C and the card menu paste or copy the whole multi-selection
+  in strip order. Adjacent text clips paste as one, joined by line breaks;
+  images and mixed selections paste one clip after another. Shift-arrow extends
+  or shrinks the selection from its anchor. (#116)
 - The Paste Bar can be filtered by clip type - text, rich text, links, images,
   files, and colors - with a row of one-click chips under the top bar. The
   filter composes with text search and pinboards, types the current collection
   does not contain are disabled, and Command-Shift-F cycles the filter from the
-  keyboard. Escape clears the filter before closing the bar.
+  keyboard. Escape clears the filter before closing the bar. (#115)
+- Simplified Chinese, with translations by @henry-ji. Pesty follows the system
+  language, or the per-app language in System Settings. (#111)
 
 ### Changed
 - The Paste Bar's minimum height is now 330 pt (was 300 pt) so the type-filter
-  row does not squeeze the clip cards on a compact bar.
+  row does not squeeze the clip cards on a compact bar. (#115)
+
+### Fixed
+- Clicking a card selects it at once instead of after the double-click delay,
+  and the card stays under the pointer for the second click. (#108)
+- The bar stays open over a focused Chrome password field instead of closing
+  itself. (#106)
+- A resize handle left holding focus outside a drag no longer swallows every
+  Paste Bar key until relaunch. (#113, #112)
+- The bar opens on the cards the first time it is shown, so Command-Left/Right
+  and Command-C act on the strip instead of an empty search. (#116, #105)
 
 ## [1.3.0] - 2026-10-08
 
