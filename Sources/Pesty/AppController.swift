@@ -353,8 +353,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func cancelBarSearchOrHide() {
-        if !store.searchText.isEmpty {
+        if !store.multiSelectedIDs.isEmpty {
+            store.clearMultiSelection()
+        } else if !store.searchText.isEmpty {
             clearBarSearch()
+        } else if store.typeFilter != nil {
+            store.typeFilter = nil
         } else {
             hideBar()
         }
@@ -622,6 +626,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         case kVK_ANSI_P:
             togglePestyPause()
             return true
+        case kVK_ANSI_F:
+            // Quick content-type filter: All -> each type present -> All.
+            store.cycleTypeFilter()
+            return true
         default:
             return false
         }
@@ -691,6 +699,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
             } else if !store.searchText.isEmpty {
                 store.searchText = ""; store.selectFirst()
                 searchClearedAt = Date()
+            } else if store.typeFilter != nil {
+                store.typeFilter = nil
             } else { hideBar() }
             return nil
         case kVK_Return, kVK_ANSI_KeypadEnter:

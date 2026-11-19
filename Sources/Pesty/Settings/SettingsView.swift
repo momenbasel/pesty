@@ -140,7 +140,11 @@ private struct GeneralSettings: View {
                 Toggle("Show Pesty in the menu bar", isOn: $settings.showMenuBarIcon)
                 VStack(alignment: .leading) {
                     LabeledContent("Bar height", value: "\(Int(settings.barHeight)) pt")
-                    Slider(value: $settings.barHeight, in: 300...720, step: 10)
+                    // The geometry owns the portable range; keep the slider in
+                    // sync with it instead of repeating the numbers here.
+                    Slider(value: $settings.barHeight,
+                           in: BarResizeGeometry.minimumHeight...BarResizeGeometry.maximumHeight,
+                           step: 10)
                 }
                 Toggle("Show resize handle on the Paste Bar", isOn: $settings.showBarResizeHandle)
                 #if MAS

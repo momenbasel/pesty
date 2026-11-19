@@ -23,6 +23,7 @@ struct BarView: View {
         .overlay(alignment: .top) {
             VStack(spacing: 0) {
                 topBar
+                ClipTypeFilterBar()
                 strip
             }
         }
@@ -174,6 +175,9 @@ struct BarView: View {
             Button { AppController.shared.showSettings() } label: {
                 Label("Settings…", systemImage: "gearshape")
             }
+            Button { store.cycleTypeFilter() } label: {
+                Label("Cycle Type Filter", systemImage: "line.3.horizontal.decrease.circle")
+            }
             Button { store.clearHistory() } label: {
                 Label("Clear History", systemImage: "trash")
             }
@@ -216,7 +220,7 @@ struct BarView: View {
                     }
                 }
                 .padding(.horizontal, Theme.cardStripHorizontalPadding)
-                .padding(.top, 16)
+                .padding(.top, 10)
                 .padding(.bottom, 26)
                 .animation(.spring(response: 0.34, dampingFraction: 0.8), value: store.visibleItems.count)
                 .id(Self.stripStartID)
@@ -251,15 +255,48 @@ struct BarView: View {
 
     private var emptyState: some View {
         VStack(spacing: 10) {
-            Image(systemName: store.searchText.isEmpty ? "doc.on.clipboard" : "magnifyingglass")
+            Image(systemName: emptyStateSymbol)
                 .font(.system(size: 34, weight: .light))
                 .foregroundStyle(Theme.chromeTextTertiary)
-            Text(store.searchText.isEmpty
-                 ? "Nothing copied yet"
-                 : "No matches for “\(store.searchText)”")
+            Text(emptyStateMessage)
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.chromeTextSecondary)
+            if store.typeFilter != nil, !store.sourceItems.isEmpty {
+                Button {
+                    store.typeFilter = nil
+                } label: {
+                    Label("Clear Type Filter", systemImage: "line.3.horizontal.decrease.circle")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Show every clip type again")
+            }
         }
+    }
+
+    private var emptyStateSymbol: String {
+        if store.searchText.isEmpty, store.typeFilter != nil, !store.sourceItems.isEmpty {
+            return "line.3.horizontal.decrease.circle"
+        }
+        return store.searchText.isEmpty ? "doc.on.clipboard" : "magnifyingglass"
+    }
+
+    private var emptyStateMessage: String {
+        let query = store.searchText
+        let filteredType = store.typeFilter
+        if !query.isEmpty {
+            if let filteredType {
+                return "No \(filteredType.label.lowercased()) matches for “\(query)”"
+            }
+            return "No matches for “\(query)”"
+        }
+        // A filter can only narrow a collection that has clips; when everything
+        // is gone, "Nothing copied yet" is the truthful state.
+        if let filteredType, !store.sourceItems.isEmpty {
+            return "No \(filteredType.label.lowercased()) clips in this collection"
+        }
+        return "Nothing copied yet"
     }
 }
 
