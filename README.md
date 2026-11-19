@@ -78,9 +78,11 @@ The build is signed with a Developer ID and notarized by Apple, so it opens with
 | `⌘⇧P` (with strip open) | Pause / resume clipboard monitoring |
 | `⌘⇧F` (with strip open) | Cycle the clip-type filter through the types present: All → … → All |
 | `←` `→` `↑` `↓` | Move selection |
-| `return` | Paste selected clip |
+| `⇧←` `⇧→` (also `⇧`-click, `⌘`-click) | Extend the selection to several clips |
+| `return` | Paste the selection: text clips joined by line breaks, images and mixed selections one clip after another |
+| `⌘C` | Copy the selection |
 | `⌘1`–`⌘9` (configurable) | Quick-paste the Nth clip; add the plain-text modifier (default `⇧`) to paste unformatted |
-| `⌫` (search empty) or `⌘⌫` | Delete selected clip |
+| `⌫` (search empty) or `⌘⌫` | Delete the selection |
 | type anything | Search |
 | `esc` | Clear selection, then search, then filter; close when none |
 

@@ -44,10 +44,11 @@ struct ClipCardView: View {
         .animation(.easeOut(duration: 0.14), value: hovering)
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
-        .onTapGesture(count: 2) { AppController.shared.pasteItem(item) }
-        .onTapGesture { store.select(item.id) }
-        .highPriorityGesture(TapGesture().modifiers(.shift).onEnded { store.extendSelection(to: item.id) })
-        .highPriorityGesture(TapGesture().modifiers(.command).onEnded { store.toggleSelection(item.id) })
+        .modifier(ClipCardInteractions(
+            select: { store.select(item.id) },
+            extendSelection: { store.extendSelection(to: item.id) },
+            toggleSelection: { store.toggleSelection(item.id) },
+            paste: { AppController.shared.pasteItem(item) }))
         .onDrag { ClipDragProvider.make(for: item) }
         .contextMenu { menu }
         .task(id: item.id) { await loadPreview() }
@@ -295,27 +296,33 @@ struct ClipCardView: View {
 
     @ViewBuilder
     private var menu: some View {
-        Button { AppController.shared.pasteItem(item) } label: {
-            Label(AppController.shared.pasteMenuTitle, systemImage: "doc.on.clipboard")
+        // Paste and Copy act on the whole multi-selection when this card is
+        // part of it, the same way Delete does.
+        let selection = AppController.shared.selection(containing: item)
+
+        Button { AppController.shared.pasteSelection(containing: item) } label: {
+            Label(AppController.shared.pasteMenuTitle(clipCount: selection.count),
+                  systemImage: "doc.on.clipboard")
         }
 
-        Button { AppController.shared.pasteItem(item, format: .plainText) } label: {
+        Button { AppController.shared.pasteSelection(containing: item, format: .plainText) } label: {
             Label("Paste as Plain Text", systemImage: "text.alignleft")
         }
-        .disabled(item.plainText == nil)
+        .disabled(!selection.contains { $0.plainText != nil })
 
-        Button { AppController.shared.pasteItem(item, format: .cleanFormatting) } label: {
+        Button { AppController.shared.pasteSelection(containing: item, format: .cleanFormatting) } label: {
             Label("Paste with Clean Formatting", systemImage: "paintbrush")
         }
-        .disabled(!FormatConverter.canConvert(item))
+        .disabled(!selection.contains(where: FormatConverter.canConvert))
 
-        Button { AppController.shared.pasteItem(item, format: .markdown) } label: {
+        Button { AppController.shared.pasteSelection(containing: item, format: .markdown) } label: {
             Label("Paste as Markdown", systemImage: "number")
         }
-        .disabled(!FormatConverter.canConvert(item))
+        .disabled(!selection.contains(where: FormatConverter.canConvert))
 
-        Button { AppController.shared.copyItem(item) } label: {
-            Label("Copy", systemImage: "doc.on.doc")
+        Button { AppController.shared.copySelection(containing: item) } label: {
+            Label(selection.count > 1 ? "Copy \(selection.count) Clips" : "Copy",
+                  systemImage: "doc.on.doc")
         }
 
         Divider()
