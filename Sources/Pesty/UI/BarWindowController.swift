@@ -176,6 +176,14 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
 
+        // The panel keeps its first responder across orderOut, so a resize
+        // drag that ended without returning focus would hand every key of the
+        // next presentation to the handle. Opening the bar always starts from
+        // the strip.
+        if panel.firstResponder is BarResizeHandleResponder {
+            panel.makeFirstResponder(nil)
+        }
+
         let finish: @MainActor @Sendable () -> Void = { [weak self] in
             guard let self else { return }
             self.settle(token) {

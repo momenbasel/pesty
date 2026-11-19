@@ -595,7 +595,14 @@ final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard let barWindow = barController?.window,
               event.window === barWindow else { return event }
 
-        if barWindow.firstResponder is BarResizeHandleResponder { return event }
+        // Only a handle that is actively dragging may own the bar's keys.
+        // A handle left holding first responder outside a drag (interrupted
+        // drag, focus moved onto it) used to swallow every key here, which made
+        // the bar look focused while arrows, Escape and typing all just beeped.
+        if let handle = barWindow.firstResponder as? BarResizeHandleResponder,
+           handle.isTrackingDrag {
+            return event
+        }
 
         if handleBarCommandShortcut(event) { return nil }
 
