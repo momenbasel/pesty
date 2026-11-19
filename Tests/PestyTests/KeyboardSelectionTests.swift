@@ -26,6 +26,7 @@ final class KeyboardSelectionTests: XCTestCase {
 
         store.extendSelection(by: 1)
         XCTAssertEqual(store.multiSelectedIDs, ids(clips[0...1]))
+        XCTAssertFalse(store.selectionIsPointerDriven)
         store.extendSelection(by: 1)
         XCTAssertEqual(store.multiSelectedIDs, ids(clips[0...2]))
         XCTAssertEqual(store.selectedID, clips[2].id)

@@ -610,6 +610,7 @@ final class ClipboardStore {
         }
         let next = max(0, min(items.count - 1, idx + delta))
         extendSelection(to: items[next].id)
+        selectionIsPointerDriven = false
     }
 
     func clearMultiSelection() {
