@@ -177,7 +177,8 @@ final class BarWindowController: NSWindowController, NSWindowDelegate {
         let token = beginTransition()
         phase = .showing(token)
 
-        NSApp.activate(ignoringOtherApps: true)
+        // No NSApp.activate: activating Pesty makes macOS jump to the Space holding
+        // its Settings or Preview window. The non-activating panel takes key on its own.
         panel.makeKeyAndOrderFront(nil)
         // The first time a panel becomes key, AppKit hands first responder to
         // its only key view: the search field. The bar always opens on the
