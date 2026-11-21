@@ -47,7 +47,7 @@ struct BarView: View {
         if #available(macOS 26.0, *) {
             Color.clear
         } else {
-            VisualEffectView(material: .hudWindow)
+            VisualEffectView(material: .popover)
             Theme.panelTint
         }
     }

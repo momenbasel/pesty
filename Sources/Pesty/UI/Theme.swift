@@ -17,9 +17,9 @@ enum Theme {
     // preserving the ScrollView's normal clipping behavior.
     static let cardStripHorizontalPadding: CGFloat = selectedCardRing + 43
 
-    static let chromeTextPrimary = Color.white.opacity(0.95)
-    static let chromeTextSecondary = Color.white.opacity(0.55)
-    static let chromeTextTertiary = Color.white.opacity(0.34)
+    static let chromeTextPrimary = Color.primary
+    static let chromeTextSecondary = Color.primary.opacity(0.80)
+    static let chromeTextTertiary = Color.primary.opacity(0.60)
 
     static let cardTextPrimary = Color.black.opacity(0.82)
     static let cardTextSecondary = Color.black.opacity(0.52)
